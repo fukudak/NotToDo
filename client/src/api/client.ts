@@ -69,7 +69,7 @@ export function deleteItem(id: string): Promise<{ success: boolean }> {
 
 /** レビュー記録取得 */
 export function fetchReviews(itemId?: string): Promise<ReviewRecord[]> {
-  const query = itemId ? `?itemId=${itemId}` : "";
+  const query = itemId ? `?${new URLSearchParams({ itemId }).toString()}` : "";
   return request<ReviewRecord[]>(`/api/reviews${query}`);
 }
 

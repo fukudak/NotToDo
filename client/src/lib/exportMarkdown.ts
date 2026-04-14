@@ -1,17 +1,11 @@
 import type { NotToDoItem, ReviewRecord } from "../types";
+import { calcElapsedDays, formatDate } from "./dateUtils";
 
-/** 日付文字列をYYYY/MM/DD形式に変換する */
-function formatDate(iso: string): string {
-  return iso.slice(0, 10).replace(/-/g, "/");
-}
-
-/** 開始日からの経過日数を計算する */
-function calcElapsedDays(startDate: string): number {
-  const start = new Date(startDate);
-  const today = new Date();
-  start.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+/** Markdownテーブルのセル内に使えない文字をエスケープする */
+function escapeMarkdownCell(text: string): string {
+  return text
+    .replace(/\|/g, "｜")   // パイプ文字を全角に
+    .replace(/\r?\n/g, " "); // 改行をスペースに
 }
 
 /** アイテム1件分のMarkdownを生成する */
@@ -46,7 +40,7 @@ function renderItemMarkdown(item: NotToDoItem, reviews: ReviewRecord[]): string 
       (a, b) => new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime(),
     )) {
       const label = review.adherence === "kept" ? "守れた" : "破った";
-      md += `| ${formatDate(review.reviewedAt)} | ${label} | ${review.reflection.replace(/\|/g, "｜")} |\n`;
+      md += `| ${formatDate(review.reviewedAt)} | ${label} | ${escapeMarkdownCell(review.reflection)} |\n`;
     }
   }
 

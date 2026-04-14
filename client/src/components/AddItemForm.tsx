@@ -1,4 +1,5 @@
 import { type FormEvent, useState } from "react";
+import { DEFAULT_TARGET_DAYS } from "../lib/constants";
 
 interface AddItemFormProps {
   onAdd: (title: string, reason: string, startDate: string, targetDays: number) => Promise<void>;
@@ -19,12 +20,12 @@ export function AddItemForm({ onAdd }: AddItemFormProps) {
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
   const [startDate, setStartDate] = useState(todayString());
-  const [targetDays, setTargetDays] = useState<number>(66);
+  const [targetDays, setTargetDays] = useState<number>(DEFAULT_TARGET_DAYS);
   const [customDays, setCustomDays] = useState("");
   const [useCustom, setUseCustom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const effectiveTargetDays = useCustom ? (parseInt(customDays, 10) || 66) : targetDays;
+  const effectiveTargetDays = useCustom ? (parseInt(customDays, 10) || DEFAULT_TARGET_DAYS) : targetDays;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,7 +36,7 @@ export function AddItemForm({ onAdd }: AddItemFormProps) {
       setTitle("");
       setReason("");
       setStartDate(todayString());
-      setTargetDays(66);
+      setTargetDays(DEFAULT_TARGET_DAYS);
       setCustomDays("");
       setUseCustom(false);
     } finally {

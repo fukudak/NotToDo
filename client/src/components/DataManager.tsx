@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import * as api from "../api/client";
+import { MAX_IMPORT_FILE_BYTES } from "../lib/constants";
 import { downloadMarkdown, generateMarkdown } from "../lib/exportMarkdown";
 import { parseBackupFile } from "../lib/importMarkdown";
 import type { NotToDoItem, ReviewRecord } from "../types";
@@ -28,6 +29,12 @@ export function DataManager({ items, reviews, onImportComplete }: DataManagerPro
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
+      setMessage({ type: "error", text: "ファイルサイズが大きすぎます（上限: 10MB）" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     setImporting(true);
     setMessage(null);

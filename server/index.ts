@@ -8,8 +8,9 @@ import { importExportRoutes } from "./routes/importExport.ts";
 
 const app = new Hono();
 
-// 開発時のCORS対応（Vite devサーバーからのアクセス許可）
-app.use("/api/*", cors({ origin: "http://localhost:5173" }));
+// 開発時のCORS対応（CORS_ORIGIN環境変数またはデフォルトのVite devサーバー）
+const corsOrigin = process.env["CORS_ORIGIN"] ?? "http://localhost:5173";
+app.use("/api/*", cors({ origin: corsOrigin }));
 
 // APIルート
 app.route("/api/items", itemRoutes);

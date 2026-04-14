@@ -1,4 +1,5 @@
 import type { AdherenceSummary, ItemProgress, NotToDoItem, ReviewRecord } from "../types";
+import { calcElapsedDays } from "../lib/dateUtils";
 
 interface ItemCardProps {
   item: NotToDoItem;
@@ -6,16 +7,6 @@ interface ItemCardProps {
   reviews: ReviewRecord[];
   onDelete: (id: string) => Promise<void>;
   onRetry: (id: string) => Promise<void>;
-}
-
-/** 開始日からの経過日数を計算する */
-function calcElapsedDays(startDate: string): number {
-  const start = new Date(startDate);
-  const today = new Date();
-  // 時刻を除いて日付のみで比較
-  start.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 /** アイテムの進捗情報を計算する */

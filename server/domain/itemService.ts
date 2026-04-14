@@ -1,5 +1,8 @@
 import { readData, writeData } from "../infrastructure/dataRepository.ts";
+import { NotFoundError } from "./errors.ts";
 import type { CreateItemRequest, NotToDoItem, UpdateItemRequest } from "./types.ts";
+
+const DEFAULT_TARGET_DAYS = 66;
 
 /** 日付文字列をYYYY-MM-DD形式に変換する */
 function toDateString(date: Date): string {
@@ -24,7 +27,7 @@ export async function addItem(request: CreateItemRequest): Promise<NotToDoItem> 
     createdAt: now,
     updatedAt: now,
     startDate: request.startDate ?? today,
-    targetDays: request.targetDays ?? 66,
+    targetDays: request.targetDays ?? DEFAULT_TARGET_DAYS,
     currentAttempt: 1,
   };
   data.items.push(item);
@@ -37,7 +40,7 @@ export async function updateItem(id: string, request: UpdateItemRequest): Promis
   const data = await readData();
   const index = data.items.findIndex((item) => item.id === id);
   if (index === -1) {
-    throw new Error(`アイテムが見つかりません: ${id}`);
+    throw new NotFoundError("アイテム", id);
   }
   const existing = data.items[index]!;
   const updated: NotToDoItem = {
@@ -56,7 +59,7 @@ export async function retryItem(id: string): Promise<NotToDoItem> {
   const data = await readData();
   const index = data.items.findIndex((item) => item.id === id);
   if (index === -1) {
-    throw new Error(`アイテムが見つかりません: ${id}`);
+    throw new NotFoundError("アイテム", id);
   }
   const existing = data.items[index]!;
   const retried: NotToDoItem = {
@@ -76,7 +79,7 @@ export async function deleteItem(id: string): Promise<void> {
   const data = await readData();
   const index = data.items.findIndex((item) => item.id === id);
   if (index === -1) {
-    throw new Error(`アイテムが見つかりません: ${id}`);
+    throw new NotFoundError("アイテム", id);
   }
   data.items.splice(index, 1);
   // 関連するレビューも削除
