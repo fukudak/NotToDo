@@ -1,7 +1,10 @@
 node_modules/
 client/dist/
 client/node_modules/
+client/tsconfig.tsbuildinfo
 data/
 *.log
 .env
 .DS_Store
+# TypeScriptからの生成JSファイル（Viteがtransformするため不要）
+client/src/**/*.js

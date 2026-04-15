@@ -1,4 +1,5 @@
 import { readData, writeData } from "../infrastructure/dataRepository.ts";
+import { NotFoundError } from "./errors.ts";
 import type { AdherenceSummary, CreateReviewRequest, ReviewRecord } from "./types.ts";
 
 /** 全レビュー記録を取得する。itemIdでフィルタ可能 */
@@ -16,7 +17,7 @@ export async function addReview(request: CreateReviewRequest): Promise<ReviewRec
   // 対象アイテムの存在確認
   const item = data.items.find((i) => i.id === request.itemId);
   if (!item) {
-    throw new Error(`アイテムが見つかりません: ${request.itemId}`);
+    throw new NotFoundError("アイテム", request.itemId);
   }
   const review: ReviewRecord = {
     id: crypto.randomUUID(),

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { addReview, getAdherenceSummary, getReviews } from "../domain/reviewService.ts";
+import { NotFoundError } from "../domain/errors.ts";
 import type { CreateReviewRequest } from "../domain/types.ts";
 
 const reviewRoutes = new Hono();
@@ -20,7 +21,7 @@ reviewRoutes.get("/summary", async (c) => {
 /** レビュー記録追加 */
 reviewRoutes.post("/", async (c) => {
   const body = await c.req.json<CreateReviewRequest>();
-  if (!body.itemId || !body.adherence || !body.reflection) {
+  if (!body.itemId || !body.adherence || body.reflection === undefined) {
     return c.json(
       { error: { code: "INVALID_INPUT", message: "itemId, adherence, reflectionは必須です" } },
       400,
@@ -36,7 +37,7 @@ reviewRoutes.post("/", async (c) => {
     const review = await addReview(body);
     return c.json(review, 201);
   } catch (e) {
-    if (e instanceof Error && e.message.includes("見つかりません")) {
+    if (e instanceof NotFoundError) {
       return c.json({ error: { code: "ITEM_NOT_FOUND", message: e.message } }, 404);
     }
     throw e;

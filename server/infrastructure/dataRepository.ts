@@ -17,7 +17,13 @@ export async function readData(): Promise<NotToDoData> {
     return createEmptyData();
   }
   const text = await file.text();
-  return JSON.parse(text) as NotToDoData;
+  try {
+    return JSON.parse(text) as NotToDoData;
+  } catch {
+    throw new Error(
+      "データファイルが破損しています。data/not-to-do-items.json を確認してください。",
+    );
+  }
 }
 
 /** データファイルにアトミックに書き込む（一時ファイル経由） */
