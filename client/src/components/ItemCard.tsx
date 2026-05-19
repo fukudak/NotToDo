@@ -59,8 +59,19 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
   const targetDays = item.targetDays ?? 66;
   const currentAttempt = item.currentAttempt ?? 1;
   const progress = calcProgress(item, reviews);
+  const remainingDays = Math.max(0, targetDays - progress.elapsedDays);
   const progressPercent = Math.min(100, Math.round((progress.elapsedDays / targetDays) * 100));
   const stageClass = progressStageClass(progressPercent, progress.status);
+  const lastReviewedAt = reviews
+    .filter((r) => r.itemId === item.id)
+    .reduce<string | null>((latest, r) => (r.reviewedAt > (latest ?? "") ? r.reviewedAt : latest), null)
+    ?.slice(0, 10);
+  const progressLabel =
+    progress.status === "achieved"
+      ? "達成済み"
+      : progress.status === "failed"
+        ? "今回の試みは失敗"
+        : `あと${remainingDays}日`;
 
   return (
     <div className={`item-card status-${progress.status} ${stageClass}`.trim()}>
@@ -117,6 +128,7 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
             </span>
             <span className="progress-percent">{progressPercent}%</span>
           </div>
+          <div className="progress-meta">{progressLabel}</div>
           <div className="progress-bar-track">
             <div
               className={`progress-bar-fill ${progress.status}`}
@@ -128,13 +140,18 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
 
       {/* フッター */}
       <div className="item-footer">
-        {summary && summary.totalReviews > 0 ? (
-          <span className="review-count">
-            振り返り {summary.totalReviews}回
+        <div className="review-info">
+          {summary && summary.totalReviews > 0 ? (
+            <span className="review-count">振り返り {summary.totalReviews}回</span>
+          ) : (
+            <span className="review-count muted">未レビュー</span>
+          )}
+          <span className="review-last-date">
+            {lastReviewedAt
+              ? `最終: ${lastReviewedAt.replace(/-/g, "/")}`
+              : "まだ振り返りなし"}
           </span>
-        ) : (
-          <span className="review-count muted">未レビュー</span>
-        )}
+        </div>
         <span className="item-date">
           開始: {(item.startDate ?? item.createdAt.slice(0, 10)).replace(/-/g, "/")}
         </span>

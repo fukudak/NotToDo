@@ -557,6 +557,12 @@ body {
   color: var(--color-text-3);
 }
 
+.progress-meta {
+  margin: 4px 0 8px;
+  font-size: var(--font-size-100);
+  color: var(--color-text-2);
+}
+
 .progress-bar-track {
   height: 4px;
   background: var(--color-neutral-bg-3);
@@ -586,11 +592,22 @@ body {
   font-size: var(--font-size-100);
 }
 
+.review-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .review-count {
   color: var(--color-text-2);
 }
 
 .review-count.muted {
+  color: var(--color-text-3);
+}
+
+.review-last-date {
+  font-size: 0.75em;
   color: var(--color-text-3);
 }
 
