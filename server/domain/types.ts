@@ -57,6 +57,8 @@ export interface UpdateItemRequest {
   title?: string;
   reason?: string;
   completedAt?: string | null;
+  /** ユーザー境界チェック用。指定するとアイテムの userId と照合する */
+  userId?: UserId;
 }
 
 /** レビュー作成リクエスト */
