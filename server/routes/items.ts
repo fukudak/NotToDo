@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { addItem, deleteItem, getAllItems, retryItem, updateItem } from "../domain/itemService.ts";
+import { PlanLimitError } from "../domain/planService.ts";
 import type { CreateItemRequest, UpdateItemRequest } from "../domain/types.ts";
 
 const itemRoutes = new Hono();
@@ -16,8 +17,15 @@ itemRoutes.post("/", async (c) => {
   if (!body.title || !body.reason) {
     return c.json({ error: { code: "INVALID_INPUT", message: "titleとreasonは必須です" } }, 400);
   }
-  const item = await addItem(body);
-  return c.json(item, 201);
+  try {
+    const item = await addItem(body);
+    return c.json(item, 201);
+  } catch (e) {
+    if (e instanceof PlanLimitError) {
+      return c.json({ error: { code: "PLAN_LIMIT_EXCEEDED", message: e.message } }, 403);
+    }
+    throw e;
+  }
 });
 
 /** アイテム更新 */

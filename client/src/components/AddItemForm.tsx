@@ -2,6 +2,9 @@ import { type FormEvent, useState } from "react";
 
 interface AddItemFormProps {
   onAdd: (title: string, reason: string, startDate: string, targetDays: number) => Promise<void>;
+  isAtLimit?: boolean;
+  maxItems?: number;
+  onNavigateToSettings?: () => void;
 }
 
 /** 今日の日付をYYYY-MM-DD形式で返す */
@@ -15,7 +18,7 @@ const TARGET_DAYS_OPTIONS = [
   { value: 90, label: "90日（本格）", description: "複雑な習慣向け" },
 ] as const;
 
-export function AddItemForm({ onAdd }: AddItemFormProps) {
+export function AddItemForm({ onAdd, isAtLimit = false, maxItems, onNavigateToSettings }: AddItemFormProps) {
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
   const [startDate, setStartDate] = useState(todayString());
@@ -42,6 +45,15 @@ export function AddItemForm({ onAdd }: AddItemFormProps) {
       setSubmitting(false);
     }
   };
+
+  if (isAtLimit) {
+    return (
+      <div className="add-item-form plan-limit-notice">
+        <p className="plan-limit-message">無料版は{maxItems}件までです</p>
+        <button type="button" className="btn-upgrade" onClick={onNavigateToSettings}>アップグレード</button>
+      </div>
+    );
+  }
 
   return (
     <form className="add-item-form" onSubmit={handleSubmit}>

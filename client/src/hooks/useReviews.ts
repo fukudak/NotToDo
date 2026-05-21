@@ -7,7 +7,12 @@ interface UseReviewsReturn {
   summary: AdherenceSummary[];
   loading: boolean;
   error: string | null;
-  addReview: (itemId: string, adherence: "kept" | "broke", reflection: string) => Promise<void>;
+  addReview: (
+    itemId: string,
+    adherence: "kept" | "broke",
+    reflection: string,
+    userId?: string,
+  ) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -39,8 +44,8 @@ export function useReviews(): UseReviewsReturn {
   }, [refresh]);
 
   const addReview = useCallback(
-    async (itemId: string, adherence: "kept" | "broke", reflection: string) => {
-      const review = await api.createReview(itemId, adherence, reflection);
+    async (itemId: string, adherence: "kept" | "broke", reflection: string, userId?: string) => {
+      const review = await api.createReview(itemId, adherence, reflection, userId);
       setReviews((prev) => [...prev, review]);
       // サマリーも再取得
       const summaryData = await api.fetchAdherenceSummary();

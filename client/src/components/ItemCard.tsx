@@ -82,6 +82,7 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
             <span className="attempt-badge">{attemptLabel(currentAttempt)}</span>
           )}
           <h3 className="item-title">{item.title}</h3>
+          {item.completedAt && <span className="completed-badge">✓ 完了</span>}
         </div>
         <button
           className="btn-icon"

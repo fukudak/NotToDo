@@ -1,4 +1,4 @@
-import type { AdherenceSummary, NotToDoItem, ReviewRecord } from "../types";
+import type { AdherenceSummary, NotToDoItem, ReviewRecord, UserPlan } from "../types";
 
 /** APIエラーレスポンス */
 interface ApiError {
@@ -35,10 +35,11 @@ export function createItem(
   reason: string,
   startDate: string,
   targetDays: number,
+  userId?: string,
 ): Promise<NotToDoItem> {
   return request<NotToDoItem>("/api/items", {
     method: "POST",
-    body: JSON.stringify({ title, reason, startDate, targetDays }),
+    body: JSON.stringify({ title, reason, startDate, targetDays, userId }),
   });
 }
 
@@ -52,7 +53,7 @@ export function retryItem(id: string): Promise<NotToDoItem> {
 /** アイテム更新 */
 export function updateItem(
   id: string,
-  data: { title?: string; reason?: string },
+  data: { title?: string; reason?: string; completedAt?: string | null },
 ): Promise<NotToDoItem> {
   return request<NotToDoItem>(`/api/items/${id}`, {
     method: "PUT",
@@ -78,16 +79,22 @@ export function createReview(
   itemId: string,
   adherence: "kept" | "broke",
   reflection: string,
+  userId?: string,
 ): Promise<ReviewRecord> {
   return request<ReviewRecord>("/api/reviews", {
     method: "POST",
-    body: JSON.stringify({ itemId, adherence, reflection }),
+    body: JSON.stringify({ itemId, adherence, reflection, userId }),
   });
 }
 
 /** 遵守率サマリー取得 */
 export function fetchAdherenceSummary(): Promise<AdherenceSummary[]> {
   return request<AdherenceSummary[]>("/api/reviews/summary");
+}
+
+/** ユーザーのプラン情報取得 */
+export function fetchPlan(userId: string): Promise<UserPlan> {
+  return request<UserPlan>(`/api/plan/${userId}`);
 }
 
 /** バックアップデータを一括インポートする */

@@ -6,7 +6,13 @@ interface UseItemsReturn {
   items: NotToDoItem[];
   loading: boolean;
   error: string | null;
-  addItem: (title: string, reason: string, startDate: string, targetDays: number) => Promise<void>;
+  addItem: (
+    title: string,
+    reason: string,
+    startDate: string,
+    targetDays: number,
+    userId?: string,
+  ) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   retryItem: (id: string) => Promise<void>;
   editItem: (id: string, data: { title?: string; reason?: string }) => Promise<void>;
@@ -36,8 +42,8 @@ export function useItems(): UseItemsReturn {
   }, [refresh]);
 
   const addItem = useCallback(
-    async (title: string, reason: string, startDate: string, targetDays: number) => {
-      const item = await api.createItem(title, reason, startDate, targetDays);
+    async (title: string, reason: string, startDate: string, targetDays: number, userId?: string) => {
+      const item = await api.createItem(title, reason, startDate, targetDays, userId);
       setItems((prev) => [...prev, item]);
     },
     [],
@@ -53,7 +59,7 @@ export function useItems(): UseItemsReturn {
     setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
   }, []);
 
-  const editItem = useCallback(async (id: string, data: { title?: string; reason?: string }) => {
+  const editItem = useCallback(async (id: string, data: { title?: string; reason?: string; completedAt?: string | null }) => {
     const updated = await api.updateItem(id, data);
     setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
   }, []);

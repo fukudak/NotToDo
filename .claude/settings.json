@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./node_modules/.bin/vitest run --reporter dot)",
+      "Bash(./node_modules/.bin/vitest run --reporter verbose)",
+      "Bash(./node_modules/.bin/vitest run *)"
+    ]
+  }
+}

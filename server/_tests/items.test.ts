@@ -6,6 +6,17 @@ vi.mock("../infrastructure/dataRepository.ts", () => ({
   writeData: vi.fn(),
 }));
 
+// planRepository をモックして既存テストへの影響を防ぐ（proプランで件数制限なし）
+vi.mock("../infrastructure/planRepository.ts", () => ({
+  readPlans: vi.fn().mockResolvedValue({
+    plans: [
+      { userId: "userA", plan: "pro", maxItems: 9999 },
+      { userId: "userB", plan: "pro", maxItems: 9999 },
+    ],
+  }),
+  writePlans: vi.fn(),
+}));
+
 import { readData, writeData } from "../infrastructure/dataRepository.ts";
 import { addItem, deleteItem, getAllItems, retryItem, updateItem } from "../domain/itemService.ts";
 
@@ -99,9 +110,29 @@ describe("itemService", () => {
       mockedReadData.mockResolvedValue({ items: [], reviews: [] });
 
       await expect(updateItem("nonexistent", { title: "新タイトル" })).rejects.toThrow(
-        "アイテムが見つかりません: nonexistent"
+        "アイテムが見つかりません: nonexistent",
       );
       expect(mockedWriteData).not.toHaveBeenCalled();
+    });
+
+    it("completedAt を設定できる", async () => {
+      mockedReadData.mockResolvedValue({ items: [{ ...baseItem }], reviews: [] });
+
+      const result = await updateItem("abc", { completedAt: "2026-03-01T00:00:00.000Z" });
+
+      expect(result.completedAt).toBe("2026-03-01T00:00:00.000Z");
+      expect(mockedWriteData).toHaveBeenCalledOnce();
+    });
+
+    it("completedAt を null でクリアできる", async () => {
+      mockedReadData.mockResolvedValue({
+        items: [{ ...baseItem, completedAt: "2026-03-01T00:00:00.000Z" }],
+        reviews: [],
+      });
+
+      const result = await updateItem("abc", { completedAt: null });
+
+      expect(result.completedAt).toBeUndefined();
     });
   });
 

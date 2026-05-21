@@ -1,3 +1,5 @@
+export type UserId = "userA" | "userB";
+
 /** やらないことアイテム */
 export interface NotToDoItem {
   id: string;
@@ -13,6 +15,9 @@ export interface NotToDoItem {
   targetDays: number;
   /** 現在の試み番号 (1始まり) */
   currentAttempt: number;
+  /** 完了日時。未完了なら undefined */
+  completedAt?: string;
+  userId?: UserId;
 }
 
 /** 振り返り記録 */
@@ -27,6 +32,7 @@ export interface ReviewRecord {
   reviewedAt: string;
   /** 何回目の試みのレビューか */
   attemptNumber: number;
+  userId?: UserId;
 }
 
 /** JSONファイルのルート構造 */
@@ -43,12 +49,14 @@ export interface CreateItemRequest {
   startDate?: string;
   /** 目標日数 (省略時は66) */
   targetDays?: number;
+  userId?: UserId;
 }
 
 /** アイテム更新リクエスト */
 export interface UpdateItemRequest {
   title?: string;
   reason?: string;
+  completedAt?: string | null;
 }
 
 /** レビュー作成リクエスト */
@@ -56,6 +64,14 @@ export interface CreateReviewRequest {
   itemId: string;
   adherence: "kept" | "broke";
   reflection: string;
+  userId?: UserId;
+}
+
+/** ユーザープラン */
+export interface UserPlan {
+  userId: UserId;
+  plan: "free" | "pro";
+  maxItems: number;
 }
 
 /** アイテムごとの遵守率サマリー */

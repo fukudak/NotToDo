@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
 import { join } from "path";
 import { itemRoutes } from "./routes/items.ts";
+import { planRoutes } from "./routes/plan.ts";
 import { reviewRoutes } from "./routes/reviews.ts";
 import { importExportRoutes } from "./routes/importExport.ts";
 
@@ -14,6 +15,7 @@ app.use("/api/*", cors({ origin: "http://localhost:5173" }));
 // APIルート
 app.route("/api/items", itemRoutes);
 app.route("/api/reviews", reviewRoutes);
+app.route("/api/plan", planRoutes);
 app.route("/api", importExportRoutes);
 
 // 本番用: ビルド済みSPAの静的ファイル配信

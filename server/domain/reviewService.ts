@@ -26,6 +26,7 @@ export async function addReview(request: CreateReviewRequest): Promise<ReviewRec
     reviewedAt: new Date().toISOString(),
     // 後方互換: currentAttempt がなければ1
     attemptNumber: item.currentAttempt ?? 1,
+    userId: request.userId ?? item.userId ?? "userA",
   };
   data.reviews.push(review);
   await writeData(data);

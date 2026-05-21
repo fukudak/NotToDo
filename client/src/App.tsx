@@ -1,16 +1,28 @@
 import { useState } from "react";
 import { AddItemForm } from "./components/AddItemForm";
 import { DataManager } from "./components/DataManager";
+import { ItemEditList } from "./components/ItemEditList";
 import { ItemList } from "./components/ItemList";
 import { ReviewPanel } from "./components/ReviewPanel";
+import { UpgradePrompt } from "./components/UpgradePrompt";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useItems } from "./hooks/useItems";
+import { usePlan } from "./hooks/usePlan";
 import { useReviews } from "./hooks/useReviews";
 
-type Tab = "list" | "review";
+type Tab = "list" | "review" | "edit" | "settings";
 
-export function App() {
+function getOwnerId(userId: string | undefined): string {
+  return userId === "userB" ? "userB" : "userA";
+}
+
+function AppContent() {
+  const { auth, switchUser, login, logout } = useAuth();
+  const currentUser = auth.userId;
+
   const [activeTab, setActiveTab] = useState<Tab>("list");
   const [showAddForm, setShowAddForm] = useState(false);
+
   const {
     items,
     loading: itemsLoading,
@@ -18,6 +30,7 @@ export function App() {
     addItem,
     removeItem,
     retryItem,
+    editItem,
     refresh: refreshItems,
   } = useItems();
   const {
@@ -29,7 +42,19 @@ export function App() {
     refresh: refreshReviews,
   } = useReviews();
 
-  /** インポート完了後に全データをリフレッシュする */
+  const { plan, loading: planLoading } = usePlan(currentUser);
+
+  const visibleItems = items.filter((item) => getOwnerId(item.userId) === currentUser);
+  const visibleReviews = reviews.filter((review) => {
+    if (review.userId) return review.userId === currentUser;
+    const relatedItem = items.find((item) => item.id === review.itemId);
+    return getOwnerId(relatedItem?.userId) === currentUser;
+  });
+  const visibleSummaries = summary.filter((entry) => {
+    const relatedItem = items.find((item) => item.id === entry.itemId);
+    return getOwnerId(relatedItem?.userId) === currentUser;
+  });
+
   const handleImportComplete = async () => {
     await Promise.all([refreshItems(), refreshReviews()]);
   };
@@ -40,7 +65,7 @@ export function App() {
     startDate: string,
     targetDays: number,
   ) => {
-    await addItem(title, reason, startDate, targetDays);
+    await addItem(title, reason, startDate, targetDays, currentUser);
     await refreshReviews();
     setShowAddForm(false);
   };
@@ -55,6 +80,8 @@ export function App() {
     await refreshReviews();
   };
 
+  const maxItems = plan?.maxItems ?? 3;
+  const isAtLimit = visibleItems.length >= maxItems;
   const loading = itemsLoading || reviewsLoading;
   const error = itemsError ?? reviewsError;
 
@@ -67,21 +94,54 @@ export function App() {
         <div className="app-title-area">
           <h1 className="app-title">やらないことリスト</h1>
           <p className="app-subtitle">やらないと決めたことを、習慣化するまで管理しよう</p>
+          <p className="app-user-indicator">現在のユーザー: {currentUser}</p>
+          <div className="user-switcher" aria-label="ユーザー切り替え">
+            <button type="button" className="user-switch-button" onClick={() => switchUser("userA")}>userA</button>
+            <button type="button" className="user-switch-button" onClick={() => switchUser("userB")}>userB</button>
+          </div>
         </div>
       </header>
 
-      <nav className="tab-nav">
+      <nav className="tab-nav" role="tablist" aria-label="画面切り替え">
         <button
+          role="tab"
+          aria-selected={activeTab === "list"}
+          aria-controls="panel-list"
+          id="tab-list"
           className={`tab-button ${activeTab === "list" ? "active" : ""}`}
           onClick={() => setActiveTab("list")}
         >
           リスト
         </button>
         <button
+          role="tab"
+          aria-selected={activeTab === "review"}
+          aria-controls="panel-review"
+          id="tab-review"
           className={`tab-button ${activeTab === "review" ? "active" : ""}`}
           onClick={() => setActiveTab("review")}
         >
           振り返り
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === "edit"}
+          aria-controls="panel-edit"
+          id="tab-edit"
+          className={`tab-button ${activeTab === "edit" ? "active" : ""}`}
+          onClick={() => setActiveTab("edit")}
+        >
+          編集
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === "settings"}
+          aria-controls="panel-settings"
+          id="tab-settings"
+          className={`tab-button ${activeTab === "settings" ? "active" : ""}`}
+          onClick={() => setActiveTab("settings")}
+        >
+          設定
         </button>
       </nav>
 
@@ -90,32 +150,87 @@ export function App() {
 
       <main className="app-main">
         {activeTab === "list" && (
-          <>
-            <button
-              className="btn-add-toggle"
-              onClick={() => setShowAddForm((v) => !v)}
-            >
+          <section id="panel-list" aria-labelledby="tab-list">
+            <button className="btn-add-toggle" onClick={() => setShowAddForm((v) => !v)}>
               {showAddForm ? "✕ キャンセル" : "+ やらないことを追加"}
             </button>
-            {showAddForm && <AddItemForm onAdd={handleAddItem} />}
+            {showAddForm && (
+              <AddItemForm
+                onAdd={handleAddItem}
+                isAtLimit={isAtLimit}
+                maxItems={maxItems}
+                onNavigateToSettings={() => setActiveTab("settings")}
+              />
+            )}
             <ItemList
-              items={items}
-              summaries={summary}
-              reviews={reviews}
+              items={visibleItems}
+              summaries={visibleSummaries}
+              reviews={visibleReviews}
               onDelete={handleDeleteItem}
               onRetry={handleRetryItem}
             />
-            <DataManager
-              items={items}
-              reviews={reviews}
-              onImportComplete={handleImportComplete}
-            />
-          </>
+            <DataManager items={visibleItems} reviews={visibleReviews} currentUser={currentUser} onImportComplete={handleImportComplete} />
+          </section>
         )}
+
         {activeTab === "review" && (
-          <ReviewPanel items={items} reviews={reviews} onAddReview={addReview} />
+          <section id="panel-review" aria-labelledby="tab-review">
+            <ReviewPanel items={visibleItems} reviews={visibleReviews} onAddReview={(itemId, adherence, reflection) => addReview(itemId, adherence, reflection, currentUser)} />
+          </section>
+        )}
+
+        {activeTab === "edit" && (
+          <section id="panel-edit" aria-labelledby="tab-edit">
+            <ItemEditList
+              items={visibleItems}
+              onEdit={editItem}
+              onDelete={handleDeleteItem}
+            />
+          </section>
+        )}
+
+        {activeTab === "settings" && (
+          <section id="panel-settings" aria-labelledby="tab-settings">
+            <div className="settings-panel">
+              <h2>設定</h2>
+              <div className="account-info">
+                <h3>アカウント</h3>
+                {auth.mode === "local" ? (
+                  <>
+                    <p>ローカルユーザーです</p>
+                    <button type="button" onClick={() => login("google")}>ログイン</button>
+                  </>
+                ) : (
+                  <>
+                    <p>{auth.mode === "authenticated" && (auth.email ?? auth.userId)}</p>
+                    <button type="button" onClick={logout}>ログアウト</button>
+                  </>
+                )}
+              </div>
+              <div className="plan-info">
+                <h3>プラン</h3>
+                {planLoading ? (
+                  <p>読み込み中...</p>
+                ) : (
+                  <>
+                    <p>現在のプラン: {plan?.plan ?? "free"}</p>
+                    <p>アイテム数: {visibleItems.length} / {maxItems}</p>
+                  </>
+                )}
+              </div>
+            </div>
+            {!planLoading && <UpgradePrompt plan={plan?.plan ?? "free"} />}
+          </section>
         )}
       </main>
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
