@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import * as api from "../api/client";
+import { useCallback, useState } from "react";
+import * as storage from "../lib/storage";
 import type { AdherenceSummary, ReviewRecord } from "../types";
 
 interface UseReviewsReturn {
@@ -17,42 +17,35 @@ interface UseReviewsReturn {
 }
 
 export function useReviews(): UseReviewsReturn {
-  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
-  const [summary, setSummary] = useState<AdherenceSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  // localStorageから同期的に初期化
+  const [reviews, setReviews] = useState<ReviewRecord[]>(() => storage.getReviews());
+  const [summary, setSummary] = useState<AdherenceSummary[]>(() =>
+    storage.computeSummary(storage.getReviews()),
+  );
   const [error, setError] = useState<string | null>(null);
 
+  // localStorageを再読み込みしてstateを更新
   const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [reviewData, summaryData] = await Promise.all([
-        api.fetchReviews(),
-        api.fetchAdherenceSummary(),
-      ]);
-      setReviews(reviewData);
-      setSummary(summaryData);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "不明なエラー");
-    } finally {
-      setLoading(false);
-    }
+    const data = storage.getReviews();
+    setReviews(data);
+    setSummary(storage.computeSummary(data));
   }, []);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
+  // レビューを追加してstateとサマリーを更新
   const addReview = useCallback(
     async (itemId: string, adherence: "kept" | "broke", reflection: string, userId?: string) => {
-      const review = await api.createReview(itemId, adherence, reflection, userId);
-      setReviews((prev) => [...prev, review]);
-      // サマリーも再取得
-      const summaryData = await api.fetchAdherenceSummary();
-      setSummary(summaryData);
+      try {
+        storage.addReview(itemId, adherence, reflection, userId);
+        const data = storage.getReviews();
+        setReviews(data);
+        setSummary(storage.computeSummary(data));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "不明なエラー");
+        throw e;
+      }
     },
     [],
   );
 
-  return { reviews, summary, loading, error, addReview, refresh };
+  return { reviews, summary, loading: false, error, addReview, refresh };
 }

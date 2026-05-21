@@ -105,23 +105,10 @@ describe("DataManager - JSONエクスポート", () => {
 
 describe("DataManager - JSONインポート", () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: RequestInfo | URL, options?: RequestInit) => {
-        const url = String(input);
-        if (url === "/api/import" && options?.method === "POST") {
-          return {
-            ok: true,
-            json: async () => ({ success: true, importedItems: 1, importedReviews: 1 }),
-          };
-        }
-        throw new Error(`unexpected fetch: ${url}`);
-      }),
-    );
+    // fetchのモックは不要（localStorage直接操作）
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -180,7 +167,8 @@ describe("DataManager - JSONインポート", () => {
     await user.upload(input, new File([backupJson], "backup.json", { type: "application/json" }));
     await user.click(screen.getByRole("button", { name: "インポート実行" }));
 
-    expect(fetch).not.toHaveBeenCalled();
+    // localStorageは変更されない
+    expect(localStorage.getItem("not-to-do-items")).toBeNull();
     expect(onImportComplete).not.toHaveBeenCalled();
   });
 
@@ -204,10 +192,9 @@ describe("DataManager - JSONインポート", () => {
     await waitFor(() => {
       expect(onImportComplete).toHaveBeenCalled();
     });
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/import",
-      expect.objectContaining({ method: "POST" }),
-    );
+    // localStorageにアイテムが保存されていることを確認
+    const storedItems = JSON.parse(localStorage.getItem("not-to-do-items") ?? "[]") as NotToDoItem[];
+    expect(storedItems).toHaveLength(1);
   });
 
   it("インポート完了後に成功メッセージが表示される", async () => {
@@ -247,12 +234,12 @@ describe("DataManager - JSONインポート", () => {
     await user.upload(input, new File([backupJson], "backup.json", { type: "application/json" }));
     await user.click(screen.getByRole("button", { name: "インポート実行" }));
 
+    // localStorageのuserIdがcurrentUser(userB)になっていることを確認
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalled();
+      const items = JSON.parse(localStorage.getItem("not-to-do-items") ?? "[]") as NotToDoItem[];
+      expect(items[0]?.userId).toBe("userB");
     });
-    const fetchCall = vi.mocked(fetch).mock.calls[0];
-    const body = JSON.parse(fetchCall[1]?.body as string);
-    expect(body.items[0].userId).toBe("userB");
-    expect(body.reviews[0].userId).toBe("userB");
+    const reviews = JSON.parse(localStorage.getItem("not-to-do-reviews") ?? "[]") as ReviewRecord[];
+    expect(reviews[0]?.userId).toBe("userB");
   });
 });

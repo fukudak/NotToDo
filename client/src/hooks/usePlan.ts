@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchPlan } from "../api/client";
+import * as storage from "../lib/storage";
 import type { UserPlan } from "../types";
 
 interface UsePlanReturn {
@@ -9,18 +9,13 @@ interface UsePlanReturn {
 }
 
 export function usePlan(userId: string): UsePlanReturn {
-  const [plan, setPlan] = useState<UserPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // localStorageから同期的に初期化（デフォルト: free / 3件）
+  const [plan, setPlanState] = useState<UserPlan>(() => storage.getPlan(userId));
 
+  // userIdが変わったらプランを再取得
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetchPlan(userId)
-      .then(setPlan)
-      .catch((e) => setError(e instanceof Error ? e.message : "不明なエラー"))
-      .finally(() => setLoading(false));
+    setPlanState(storage.getPlan(userId));
   }, [userId]);
 
-  return { plan, loading, error };
+  return { plan, loading: false, error: null };
 }

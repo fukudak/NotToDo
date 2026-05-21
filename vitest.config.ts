@@ -5,13 +5,6 @@ export default defineConfig({
   test: {
     projects: [
       {
-        test: {
-          name: "server",
-          environment: "node",
-          include: ["server/_tests/**/*.test.ts"],
-        },
-      },
-      {
         plugins: [react()],
         test: {
           name: "client",

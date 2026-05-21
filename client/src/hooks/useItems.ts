@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import * as api from "../api/client";
+import { useCallback, useState } from "react";
+import * as storage from "../lib/storage";
 import type { NotToDoItem } from "../types";
 
 interface UseItemsReturn {
@@ -15,54 +15,80 @@ interface UseItemsReturn {
   ) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   retryItem: (id: string) => Promise<void>;
-  editItem: (id: string, data: { title?: string; reason?: string }) => Promise<void>;
+  editItem: (id: string, data: { title?: string; reason?: string; completedAt?: string | null }) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
 export function useItems(): UseItemsReturn {
-  const [items, setItems] = useState<NotToDoItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // localStorageから同期的に初期化
+  const [items, setItems] = useState<NotToDoItem[]>(() => storage.getItems());
   const [error, setError] = useState<string | null>(null);
 
+  // localStorageを再読み込みしてstateを更新
   const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.fetchItems();
-      setItems(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "不明なエラー");
-    } finally {
-      setLoading(false);
-    }
+    setItems(storage.getItems());
   }, []);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
+  // アイテムを追加してstateを更新
   const addItem = useCallback(
     async (title: string, reason: string, startDate: string, targetDays: number, userId?: string) => {
-      const item = await api.createItem(title, reason, startDate, targetDays, userId);
-      setItems((prev) => [...prev, item]);
+      try {
+        storage.addItem(title, reason, startDate, targetDays, userId);
+        setItems(storage.getItems());
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "不明なエラー");
+        throw e;
+      }
     },
     [],
   );
 
+  // アイテムを削除してstateを更新
   const removeItem = useCallback(async (id: string) => {
-    await api.deleteItem(id);
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    try {
+      storage.deleteItem(id);
+      setItems(storage.getItems());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "不明なエラー");
+      throw e;
+    }
   }, []);
 
+  // 再挑戦: currentAttemptをインクリメントしてstartDateを今日にリセット
   const retryItem = useCallback(async (id: string) => {
-    const updated = await api.retryItem(id);
-    setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
+    try {
+      const items = storage.getItems();
+      const item = items.find((i) => i.id === id);
+      if (!item) throw new Error(`アイテムが見つかりません: ${id}`);
+      storage.updateItem(id, {
+        currentAttempt: item.currentAttempt + 1,
+        startDate: new Date().toISOString().slice(0, 10),
+      });
+      setItems(storage.getItems());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "不明なエラー");
+      throw e;
+    }
   }, []);
 
-  const editItem = useCallback(async (id: string, data: { title?: string; reason?: string; completedAt?: string | null }) => {
-    const updated = await api.updateItem(id, data);
-    setItems((prev) => prev.map((item) => (item.id === id ? updated : item)));
-  }, []);
+  // アイテムのタイトル・理由・完了日を更新
+  const editItem = useCallback(
+    async (id: string, data: { title?: string; reason?: string; completedAt?: string | null }) => {
+      try {
+        // null は undefined に変換（updateItemはPartialを受け取る）
+        const patch: Parameters<typeof storage.updateItem>[1] = {};
+        if (data.title !== undefined) patch.title = data.title;
+        if (data.reason !== undefined) patch.reason = data.reason;
+        if ("completedAt" in data) patch.completedAt = data.completedAt ?? undefined;
+        storage.updateItem(id, patch);
+        setItems(storage.getItems());
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "不明なエラー");
+        throw e;
+      }
+    },
+    [],
+  );
 
-  return { items, loading, error, addItem, removeItem, retryItem, editItem, refresh };
+  return { items, loading: false, error, addItem, removeItem, retryItem, editItem, refresh };
 }

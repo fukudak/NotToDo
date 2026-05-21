@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import * as api from "../api/client";
 import { downloadMarkdown, generateMarkdown } from "../lib/exportMarkdown";
 import { parseBackupFile } from "../lib/importMarkdown";
+import * as storage from "../lib/storage";
 import type { NotToDoItem, ReviewRecord } from "../types";
 
 interface DataManagerProps {
@@ -22,6 +22,7 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Markdownとしてバックアップをダウンロード
   const handleExport = () => {
     const content = generateMarkdown(items, reviews);
     const date = new Date().toISOString().slice(0, 10);
@@ -30,16 +31,10 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     setTimeout(() => setMessage(null), 3000);
   };
 
+  // JSONとしてエクスポート（storage.exportAll を使用）
   const handleJsonExport = () => {
-    const data = {
-      version: "1.0",
-      exportedAt: new Date().toISOString(),
-      items,
-      reviews,
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json;charset=utf-8",
-    });
+    const json = storage.exportAll();
+    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -50,6 +45,7 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     URL.revokeObjectURL(url);
   };
 
+  // JSONファイルを選択してプレビューを表示
   const handleJsonFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -73,6 +69,7 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     }
   };
 
+  // プレビュー確認後にJSONインポートを実行
   const handleJsonImport = async () => {
     if (!jsonPreview) return;
     const confirmed = window.confirm("既存のデータに追加します。続けますか？");
@@ -80,12 +77,13 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
 
     setJsonImporting(true);
     try {
+      // currentUserのuserIdを付与してインポート
       const importItems = jsonPreview.items.map((item) => ({ ...item, userId: currentUser }));
       const importReviews = jsonPreview.reviews.map((review) => ({
         ...review,
         userId: currentUser,
       }));
-      const result = await api.importBackup(importItems, importReviews);
+      const result = storage.importAll(JSON.stringify({ items: importItems, reviews: importReviews }));
       await onImportComplete();
       setJsonPreview(null);
       if (jsonFileInputRef.current) {
@@ -105,6 +103,7 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     }
   };
 
+  // MarkdownまたはJSONファイルからインポート
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -114,7 +113,9 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     try {
       const text = await file.text();
       const backup = parseBackupFile(text, file.name);
-      const result = await api.importBackup(backup.items, backup.reviews);
+      const result = storage.importAll(
+        JSON.stringify({ items: backup.items, reviews: backup.reviews }),
+      );
       await onImportComplete();
       setMessage({
         type: "success",

@@ -4,17 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:server": "bun --watch server/index.ts",
-    "dev:client": "cd client && bunx --bun vite",
-    "dev": "bun run dev:server & bun run dev:client",
+    "dev": "cd client && bunx --bun vite",
     "build": "cd client && bunx --bun vite build",
-    "start": "bun server/index.ts",
     "test": "vitest run"
-  },
-  "dependencies": {
-    "@hono/zod-validator": "^0.4.3",
-    "hono": "^4.7.0",
-    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
