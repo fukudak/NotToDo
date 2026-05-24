@@ -1,8 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { afterEach } from "vitest";
+import { beforeEach, describe, expect, it, afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 
-afterEach(() => {
+beforeEach(() => {
   cleanup();
   localStorage.clear();
+});
+
+// 他のテストファイルの useFakeTimers リークを遮断
+afterEach(() => {
+  vi.useRealTimers();
 });

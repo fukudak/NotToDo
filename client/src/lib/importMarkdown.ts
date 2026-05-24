@@ -29,7 +29,9 @@ function parseJsonBackup(text: string): BackupData {
     typeof parsed !== "object" ||
     parsed === null ||
     !("items" in parsed) ||
-    !("reviews" in parsed)
+    !("reviews" in parsed) ||
+    !Array.isArray((parsed as { items: unknown }).items) ||
+    !Array.isArray((parsed as { reviews: unknown }).reviews)
   ) {
     throw new Error(
       "有効なバックアップJSONではありません。items と reviews フィールドが必要です。",

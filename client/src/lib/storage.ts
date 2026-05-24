@@ -54,7 +54,7 @@ export function updateItem(
   const items = getItems();
   const index = items.findIndex((item) => item.id === id);
   if (index === -1) throw new Error(`アイテムが見つかりません: ${id}`);
-  const updated: NotToDoItem = { ...items[index], ...data, updatedAt: new Date().toISOString() };
+  const updated: NotToDoItem = { ...items[index], ...data, id: items[index].id, updatedAt: new Date().toISOString() };
   items[index] = updated;
   saveItems(items);
   return updated;

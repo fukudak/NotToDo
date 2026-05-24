@@ -21,12 +21,15 @@ describe("UpgradePrompt", () => {
   it("無料版の場合に無料版の制限が表示される", () => {
     render(<UpgradePrompt plan="free" />);
     expect(screen.getByText(/3件まで/)).toBeInTheDocument();
-    expect(screen.getByText(/エクスポート不可/)).toBeInTheDocument();
+    // spec-v2更新により「エクスポート可」に修正（矛盾解消）
+    expect(screen.getByText(/エクスポート可/)).toBeInTheDocument();
   });
 
   it("無料版の場合に有料版の特典が表示される", () => {
     render(<UpgradePrompt plan="free" />);
+    // spec-v2更新: 「無制限」は制限解除の代表機能
     expect(screen.getByText(/無制限/)).toBeInTheDocument();
+    // 優先サポートは有料のメリットとして残存
     expect(screen.getByText(/優先サポート/)).toBeInTheDocument();
   });
 

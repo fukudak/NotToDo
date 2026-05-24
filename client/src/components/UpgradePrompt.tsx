@@ -25,14 +25,14 @@ export function UpgradePrompt({ plan }: UpgradePromptProps) {
           <h4>無料版</h4>
           <ul>
             <li>3件まで</li>
-            <li>エクスポート不可</li>
+            <li>エクスポート可</li>
           </ul>
         </div>
         <div className="plan-tier plan-pro">
           <h4>有料版</h4>
           <ul>
             <li>無制限</li>
-            <li>エクスポート/インポート</li>
+            <li>クラウド同期（将来）</li>
             <li>優先サポート</li>
           </ul>
         </div>

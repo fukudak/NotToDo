@@ -36,8 +36,11 @@ describe("storage - アイテム操作", () => {
     expect(item.userId).toBeUndefined();
   });
 
-  it("updateItemでアイテムを更新できる", () => {
+  it("updateItemでアイテムを更新できる", async () => {
     const item = storage.addItem("元のタイトル", "元の理由", "2026-01-01", 66);
+    // addItem と updateItem が同じミリ秒内で実行されると updatedAt が同一になるため、
+    // 最低1ms待機してから更新する
+    await new Promise((resolve) => setTimeout(resolve, 1));
     const updated = storage.updateItem(item.id, { title: "新しいタイトル" });
     expect(updated.title).toBe("新しいタイトル");
     expect(updated.reason).toBe("元の理由");
