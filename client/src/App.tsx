@@ -87,20 +87,44 @@ function AppContent() {
 
   return (
     <div className="app">
+      <div className="app-bg" aria-hidden="true">
+        <div className="app-bg-glow app-bg-glow--1" />
+        <div className="app-bg-glow app-bg-glow--2" />
+      </div>
+
       <header className="app-header">
-        <div className="app-logo">
-          <span className="logo-icon">✗</span>
+        <div className="app-logo" aria-hidden="true">
+          <span className="logo-icon">否</span>
         </div>
         <div className="app-title-area">
+          <p className="app-eyebrow">Not To Do</p>
           <h1 className="app-title">やらないことリスト</h1>
-          <p className="app-subtitle">やらないと決めたことを、習慣化するまで管理しよう</p>
-          <p className="app-user-indicator">現在のユーザー: {currentUser}</p>
-          <div className="user-switcher" aria-label="ユーザー切り替え">
-            <button type="button" className="user-switch-button" onClick={() => switchUser("userA")}>userA</button>
-            <button type="button" className="user-switch-button" onClick={() => switchUser("userB")}>userB</button>
-          </div>
+          <p className="app-subtitle">やらないと決めたことを、習慣化するまで記録する</p>
         </div>
       </header>
+
+      <div className="app-meta">
+        <span className="app-user-indicator">
+          <span className="user-dot" aria-hidden="true" />
+          {currentUser}
+        </span>
+        <div className="user-switcher" aria-label="ユーザー切り替え">
+          <button
+            type="button"
+            className={`user-switch-button ${currentUser === "userA" ? "active" : ""}`}
+            onClick={() => switchUser("userA")}
+          >
+            userA
+          </button>
+          <button
+            type="button"
+            className={`user-switch-button ${currentUser === "userB" ? "active" : ""}`}
+            onClick={() => switchUser("userB")}
+          >
+            userB
+          </button>
+        </div>
+      </div>
 
       <nav className="tab-nav" role="tablist" aria-label="画面切り替え">
         <button
