@@ -1,58 +1,36 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { installLocalStorage } from "./setup";
 import { App } from "../src/App";
 
-// localStorageに書き込むデータ
-const mixedItems = [
+const sampleItems = [
   {
     id: "item-a",
-    title: "userAのアイテム",
-    reason: "A用",
+    title: "SNSを見ない",
+    reason: "時間の無駄",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     startDate: "2026-01-01",
     targetDays: 66,
     currentAttempt: 1,
-    userId: "userA",
   },
   {
     id: "item-b",
-    title: "userBのアイテム",
-    reason: "B用",
+    title: "夜更きしない",
+    reason: "健康のため",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     startDate: "2026-01-01",
     targetDays: 66,
     currentAttempt: 1,
-    userId: "userB",
-  },
-];
-
-const mixedReviews = [
-  {
-    id: "review-a",
-    itemId: "item-a",
-    adherence: "kept",
-    reflection: "Aの振り返り",
-    reviewedAt: "2026-01-02T00:00:00.000Z",
-    attemptNumber: 1,
-    userId: "userA",
-  },
-  {
-    id: "review-b",
-    itemId: "item-b",
-    adherence: "broke",
-    reflection: "Bの振り返り",
-    reviewedAt: "2026-01-02T00:00:00.000Z",
-    attemptNumber: 1,
-    userId: "userB",
   },
 ];
 
 describe("App shell", () => {
-  beforeEach(() => {
-    // setup.tsのafterEachでlocalStorageはクリア済みなので追加不要
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    installLocalStorage();
   });
 
   it("renders the main shell with accessible tabs and switches panels", async () => {
@@ -64,7 +42,6 @@ describe("App shell", () => {
     expect(screen.getByRole("tab", { name: "リスト" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("button", { name: "+ やらないことを追加" })).toBeInTheDocument();
 
-    // localStorageが空なので空メッセージが表示される
     expect(screen.getByText("「やらないこと」はまだありません")).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "振り返り" }));
@@ -72,47 +49,25 @@ describe("App shell", () => {
     expect(screen.getByRole("heading", { name: "振り返り" })).toBeInTheDocument();
   });
 
-  it("currentUser で表示するデータを切り替える", async () => {
-    // localStorageにuserA・userB混在データをセット
-    localStorage.setItem("not-to-do-items", JSON.stringify(mixedItems));
-    localStorage.setItem("not-to-do-reviews", JSON.stringify(mixedReviews));
+  it("localStorage の全アイテムを表示する", async () => {
+    localStorage.setItem("not-to-do-items", JSON.stringify(sampleItems));
 
-    const user = userEvent.setup();
     render(<App />);
 
-    // userAのアイテムのみ表示される
-    expect(screen.getByText("userAのアイテム")).toBeInTheDocument();
-    expect(screen.queryByText("userBのアイテム")).not.toBeInTheDocument();
-
-    // 振り返りタブではuserAのレビューのみ表示される
-    await user.click(screen.getByRole("tab", { name: "振り返り" }));
-    await waitFor(() => {
-      expect(screen.getByText("Aの振り返り")).toBeInTheDocument();
-    });
-    expect(screen.queryByText("Bの振り返り")).not.toBeInTheDocument();
-
-    // userBに切り替え
-    await user.click(screen.getByRole("button", { name: "userB" }));
-    expect(screen.getByText("Bの振り返り")).toBeInTheDocument();
-    expect(screen.queryByText("Aの振り返り")).not.toBeInTheDocument();
-
-    // リストタブに戻るとuserBのアイテムのみ表示される
-    await user.click(screen.getByRole("tab", { name: "リスト" }));
-    await waitFor(() => {
-      expect(screen.getByText("userBのアイテム")).toBeInTheDocument();
-    });
-    expect(screen.queryByText("userAのアイテム")).not.toBeInTheDocument();
+    expect(screen.getByText("SNSを見ない")).toBeInTheDocument();
+    expect(screen.getByText("夜更きしない")).toBeInTheDocument();
   });
 
   it("localStorage が使えないとき警告を表示する", () => {
-    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new DOMException("The operation is insecure.");
+    vi.stubGlobal("localStorage", {
+      setItem: () => {
+        throw new DOMException("The operation is insecure.");
+      },
+      removeItem: () => {},
     });
 
     render(<App />);
 
     expect(screen.getByRole("alert")).toHaveTextContent("このブラウザではデータを保存できません");
-
-    setItem.mockRestore();
   });
 });

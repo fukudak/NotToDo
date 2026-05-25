@@ -4,8 +4,7 @@ import { DataManager } from "./components/DataManager";
 import { ItemEditList } from "./components/ItemEditList";
 import { ItemList } from "./components/ItemList";
 import { ReviewPanel } from "./components/ReviewPanel";
-import { UpgradePrompt } from "./components/UpgradePrompt";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { SettingsPanel } from "./components/SettingsPanel";
 import { useItems } from "./hooks/useItems";
 import { usePlan } from "./hooks/usePlan";
 import { useReviews } from "./hooks/useReviews";
@@ -14,49 +13,15 @@ import { APP_VERSION } from "./version";
 
 type Tab = "list" | "review" | "edit" | "settings";
 
-function getOwnerId(userId: string | undefined): string {
-  return userId === "userB" ? "userB" : "userA";
-}
-
-function AppContent() {
-  const { auth, switchUser, login, logout } = useAuth();
-  const currentUser = auth.userId;
+export function App() {
   const storageAvailable = isLocalStorageAvailable();
-
   const [activeTab, setActiveTab] = useState<Tab>("list");
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const {
-    items,
-    loading: itemsLoading,
-    error: itemsError,
-    addItem,
-    removeItem,
-    retryItem,
-    editItem,
-    refresh: refreshItems,
-  } = useItems();
-  const {
-    reviews,
-    summary,
-    loading: reviewsLoading,
-    error: reviewsError,
-    addReview,
-    refresh: refreshReviews,
-  } = useReviews();
-
-  const { plan, loading: planLoading } = usePlan(currentUser);
-
-  const visibleItems = items.filter((item) => getOwnerId(item.userId) === currentUser);
-  const visibleReviews = reviews.filter((review) => {
-    if (review.userId) return review.userId === currentUser;
-    const relatedItem = items.find((item) => item.id === review.itemId);
-    return getOwnerId(relatedItem?.userId) === currentUser;
-  });
-  const visibleSummaries = summary.filter((entry) => {
-    const relatedItem = items.find((item) => item.id === entry.itemId);
-    return getOwnerId(relatedItem?.userId) === currentUser;
-  });
+  const { items, error: itemsError, addItem, removeItem, retryItem, editItem, refresh: refreshItems } =
+    useItems();
+  const { reviews, summary, error: reviewsError, addReview, refresh: refreshReviews } = useReviews();
+  const { plan } = usePlan();
 
   const handleImportComplete = async () => {
     await Promise.all([refreshItems(), refreshReviews()]);
@@ -68,7 +33,7 @@ function AppContent() {
     startDate: string,
     targetDays: number,
   ) => {
-    await addItem(title, reason, startDate, targetDays, currentUser);
+    await addItem(title, reason, startDate, targetDays);
     await refreshReviews();
     setShowAddForm(false);
   };
@@ -83,9 +48,8 @@ function AppContent() {
     await refreshReviews();
   };
 
-  const maxItems = plan?.maxItems ?? 3;
-  const isAtLimit = visibleItems.length >= maxItems;
-  const loading = itemsLoading || reviewsLoading;
+  const maxItems = plan.maxItems;
+  const isAtLimit = items.length >= maxItems;
   const error = itemsError ?? reviewsError;
 
   return (
@@ -106,29 +70,6 @@ function AppContent() {
           <p className="app-subtitle">やらないと決めたことを、習慣化するまで記録する</p>
         </div>
       </header>
-
-      <div className="app-meta">
-        <span className="app-user-indicator">
-          <span className="user-dot" aria-hidden="true" />
-          {currentUser}
-        </span>
-        <div className="user-switcher" aria-label="ユーザー切り替え">
-          <button
-            type="button"
-            className={`user-switch-button ${currentUser === "userA" ? "active" : ""}`}
-            onClick={() => switchUser("userA")}
-          >
-            userA
-          </button>
-          <button
-            type="button"
-            className={`user-switch-button ${currentUser === "userB" ? "active" : ""}`}
-            onClick={() => switchUser("userB")}
-          >
-            userB
-          </button>
-        </div>
-      </div>
 
       <nav className="tab-nav" role="tablist" aria-label="画面切り替え">
         <button
@@ -179,7 +120,6 @@ function AppContent() {
           このブラウザではデータを保存できません。プライベートブラウジングを解除するか、通常モードで開いてください。閉じると入力内容は失われます。
         </div>
       )}
-      {loading && <div className="loading-bar" />}
 
       <main className="app-main">
         {activeTab === "list" && (
@@ -196,63 +136,35 @@ function AppContent() {
               />
             )}
             <ItemList
-              items={visibleItems}
-              summaries={visibleSummaries}
-              reviews={visibleReviews}
+              items={items}
+              summaries={summary}
+              reviews={reviews}
               onDelete={handleDeleteItem}
               onRetry={handleRetryItem}
             />
-            <DataManager items={visibleItems} reviews={visibleReviews} currentUser={currentUser} onImportComplete={handleImportComplete} />
+            <DataManager items={items} reviews={reviews} onImportComplete={handleImportComplete} />
           </section>
         )}
 
         {activeTab === "review" && (
           <section id="panel-review" aria-labelledby="tab-review">
-            <ReviewPanel items={visibleItems} reviews={visibleReviews} onAddReview={(itemId, adherence, reflection) => addReview(itemId, adherence, reflection, currentUser)} />
+            <ReviewPanel
+              items={items}
+              reviews={reviews}
+              onAddReview={(itemId, adherence, reflection) => addReview(itemId, adherence, reflection)}
+            />
           </section>
         )}
 
         {activeTab === "edit" && (
           <section id="panel-edit" aria-labelledby="tab-edit">
-            <ItemEditList
-              items={visibleItems}
-              onEdit={editItem}
-              onDelete={handleDeleteItem}
-            />
+            <ItemEditList items={items} onEdit={editItem} onDelete={handleDeleteItem} />
           </section>
         )}
 
         {activeTab === "settings" && (
           <section id="panel-settings" aria-labelledby="tab-settings">
-            <div className="settings-panel">
-              <h2>設定</h2>
-              <div className="account-info">
-                <h3>アカウント</h3>
-                {auth.mode === "local" ? (
-                  <>
-                    <p>ローカルユーザーです</p>
-                    <button type="button" onClick={() => login("google")}>ログイン</button>
-                  </>
-                ) : (
-                  <>
-                    <p>{auth.mode === "authenticated" && (auth.email ?? auth.userId)}</p>
-                    <button type="button" onClick={logout}>ログアウト</button>
-                  </>
-                )}
-              </div>
-              <div className="plan-info">
-                <h3>プラン</h3>
-                {planLoading ? (
-                  <p>読み込み中...</p>
-                ) : (
-                  <>
-                    <p>現在のプラン: {plan?.plan ?? "free"}</p>
-                    <p>アイテム数: {visibleItems.length} / {maxItems}</p>
-                  </>
-                )}
-              </div>
-            </div>
-            {!planLoading && <UpgradePrompt plan={plan?.plan ?? "free"} />}
+            <SettingsPanel plan={plan} itemCount={items.length} />
           </section>
         )}
       </main>
@@ -261,13 +173,5 @@ function AppContent() {
         v{APP_VERSION}
       </footer>
     </div>
-  );
-}
-
-export function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }

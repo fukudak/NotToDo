@@ -1,15 +1,11 @@
 import { type FormEvent, useState } from "react";
+import { todayISO } from "../lib/dates";
 
 interface AddItemFormProps {
   onAdd: (title: string, reason: string, startDate: string, targetDays: number) => Promise<void>;
   isAtLimit?: boolean;
   maxItems?: number;
   onNavigateToSettings?: () => void;
-}
-
-/** 今日の日付をYYYY-MM-DD形式で返す */
-function todayString(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 const TARGET_DAYS_OPTIONS = [
@@ -21,7 +17,7 @@ const TARGET_DAYS_OPTIONS = [
 export function AddItemForm({ onAdd, isAtLimit = false, maxItems, onNavigateToSettings }: AddItemFormProps) {
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
-  const [startDate, setStartDate] = useState(todayString());
+  const [startDate, setStartDate] = useState(todayISO());
   const [targetDays, setTargetDays] = useState<number>(66);
   const [customDays, setCustomDays] = useState("");
   const [useCustom, setUseCustom] = useState(false);
@@ -37,7 +33,7 @@ export function AddItemForm({ onAdd, isAtLimit = false, maxItems, onNavigateToSe
       await onAdd(title.trim(), reason.trim(), startDate, effectiveTargetDays);
       setTitle("");
       setReason("");
-      setStartDate(todayString());
+      setStartDate(todayISO());
       setTargetDays(66);
       setCustomDays("");
       setUseCustom(false);

@@ -1,4 +1,14 @@
-import type { AdherenceSummary, ItemProgress, NotToDoItem, ReviewRecord } from "../types";
+import {
+  attemptLabel,
+  calcItemProgress,
+  calcProgressPercent,
+  getCurrentAttempt,
+  getItemStartDate,
+  getTargetDays,
+  progressStageClass,
+} from "../lib/itemProgress";
+import { formatDisplayDate } from "../lib/dates";
+import type { AdherenceSummary, NotToDoItem, ReviewRecord } from "../types";
 
 interface ItemCardProps {
   item: NotToDoItem;
@@ -8,59 +18,12 @@ interface ItemCardProps {
   onRetry: (id: string) => Promise<void>;
 }
 
-/** 開始日からの経過日数を計算する */
-function calcElapsedDays(startDate: string): number {
-  const start = new Date(startDate);
-  const today = new Date();
-  // 時刻を除いて日付のみで比較
-  start.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-/** アイテムの進捗情報を計算する */
-function calcProgress(item: NotToDoItem, reviews: ReviewRecord[]): ItemProgress {
-  const currentAttempt = item.currentAttempt ?? 1;
-  const startDate = item.startDate ?? item.createdAt.slice(0, 10);
-  const elapsedDays = calcElapsedDays(startDate);
-
-  const currentAttemptReviews = reviews.filter(
-    (r) => (r.attemptNumber ?? 1) === currentAttempt && r.itemId === item.id,
-  );
-  const hasBroke = currentAttemptReviews.some((r) => r.adherence === "broke");
-
-  let status: ItemProgress["status"];
-  if (hasBroke) {
-    status = "failed";
-  } else if (elapsedDays >= (item.targetDays ?? 66)) {
-    status = "achieved";
-  } else {
-    status = "ongoing";
-  }
-
-  return { elapsedDays, status, currentAttemptReviews, hasBroke };
-}
-
-/** 試み番号を日本語で表示する */
-function attemptLabel(n: number): string {
-  if (n === 1) return "";
-  return `${n}回目の挑戦`;
-}
-
-/** 進捗率から3段階のステージクラスを返す（failed/achievedは除く） */
-function progressStageClass(percent: number, status: ItemProgress["status"]): string {
-  if (status !== "ongoing") return "";
-  if (percent >= 67) return "progress-stage-3";
-  if (percent >= 34) return "progress-stage-2";
-  return "progress-stage-1";
-}
-
 export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCardProps) {
-  const targetDays = item.targetDays ?? 66;
-  const currentAttempt = item.currentAttempt ?? 1;
-  const progress = calcProgress(item, reviews);
+  const targetDays = getTargetDays(item);
+  const currentAttempt = getCurrentAttempt(item);
+  const progress = calcItemProgress(item, reviews);
   const remainingDays = Math.max(0, targetDays - progress.elapsedDays);
-  const progressPercent = Math.min(100, Math.round((progress.elapsedDays / targetDays) * 100));
+  const progressPercent = calcProgressPercent(item, progress.elapsedDays);
   const stageClass = progressStageClass(progressPercent, progress.status);
   const lastReviewedAt = reviews
     .filter((r) => r.itemId === item.id)
@@ -75,7 +38,6 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
 
   return (
     <div className={`item-card status-${progress.status} ${stageClass}`.trim()}>
-      {/* ヘッダー */}
       <div className="item-header">
         <div className="item-title-area">
           {currentAttempt > 1 && (
@@ -96,10 +58,8 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
         </button>
       </div>
 
-      {/* 理由 */}
       <p className="item-reason">{item.reason}</p>
 
-      {/* 達成バッジ */}
       {progress.status === "achieved" && (
         <div className="achievement-badge">
           <span className="badge-icon">★</span>
@@ -107,20 +67,15 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
         </div>
       )}
 
-      {/* 失敗メッセージ */}
       {progress.status === "failed" && (
         <div className="failed-notice">
           <span>破ってしまいましたが、諦めないで。</span>
-          <button
-            className="btn-retry"
-            onClick={() => void onRetry(item.id)}
-          >
+          <button className="btn-retry" onClick={() => void onRetry(item.id)}>
             リトライする
           </button>
         </div>
       )}
 
-      {/* 進捗バー */}
       {progress.status !== "achieved" && (
         <div className="progress-section">
           <div className="progress-labels">
@@ -139,7 +94,6 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
         </div>
       )}
 
-      {/* フッター */}
       <div className="item-footer">
         <div className="review-info">
           {summary && summary.totalReviews > 0 ? (
@@ -149,13 +103,11 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
           )}
           <span className="review-last-date">
             {lastReviewedAt
-              ? `最終: ${lastReviewedAt.replace(/-/g, "/")}`
+              ? `最終: ${formatDisplayDate(lastReviewedAt)}`
               : "まだ振り返りなし"}
           </span>
         </div>
-        <span className="item-date">
-          開始: {(item.startDate ?? item.createdAt.slice(0, 10)).replace(/-/g, "/")}
-        </span>
+        <span className="item-date">開始: {formatDisplayDate(getItemStartDate(item))}</span>
       </div>
     </div>
   );

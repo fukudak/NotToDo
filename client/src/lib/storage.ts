@@ -1,4 +1,4 @@
-import type { AdherenceSummary, NotToDoItem, ReviewRecord, UserId, UserPlan } from "../types";
+import type { AdherenceSummary, NotToDoItem, ReviewRecord, UserPlan } from "../types";
 
 const KEYS = {
   ITEMS: "not-to-do-items",
@@ -6,7 +6,25 @@ const KEYS = {
   PLAN: "not-to-do-plan",
 } as const;
 
-type PlanStorage = Record<string, { plan: "free" | "pro"; maxItems: number }>;
+const DEFAULT_PLAN: UserPlan = { plan: "free", maxItems: 3 };
+
+/** 旧形式（userId キー付き）からの移行用 */
+type LegacyPlanStorage = Record<string, { plan: "free" | "pro"; maxItems: number }>;
+
+function normalizePlan(raw: unknown): UserPlan {
+  if (!raw || typeof raw !== "object") return DEFAULT_PLAN;
+
+  const data = raw as Record<string, unknown>;
+  if (typeof data.plan === "string" && typeof data.maxItems === "number") {
+    return { plan: data.plan as UserPlan["plan"], maxItems: data.maxItems };
+  }
+
+  const legacy = raw as LegacyPlanStorage;
+  const entry = legacy.userA ?? legacy.userB ?? Object.values(legacy)[0];
+  if (entry) return { plan: entry.plan, maxItems: entry.maxItems };
+
+  return DEFAULT_PLAN;
+}
 
 // アイテム一覧をlocalStorageから取得
 export function getItems(): NotToDoItem[] {
@@ -28,7 +46,6 @@ export function addItem(
   reason: string,
   startDate: string,
   targetDays: number,
-  userId?: string,
 ): NotToDoItem {
   const now = new Date().toISOString();
   const item: NotToDoItem = {
@@ -40,7 +57,6 @@ export function addItem(
     startDate,
     targetDays,
     currentAttempt: 1,
-    ...(userId !== undefined ? { userId } : {}),
   };
   saveItems([...getItems(), item]);
   return item;
@@ -85,7 +101,6 @@ export function addReview(
   itemId: string,
   adherence: "kept" | "broke",
   reflection: string,
-  userId?: string,
 ): ReviewRecord {
   const item = getItems().find((i) => i.id === itemId);
   const review: ReviewRecord = {
@@ -95,7 +110,6 @@ export function addReview(
     reflection,
     reviewedAt: new Date().toISOString(),
     attemptNumber: item?.currentAttempt ?? 1,
-    ...(userId !== undefined ? { userId } : {}),
   };
   saveReviews([...getReviews(), review]);
   return review;
@@ -122,27 +136,20 @@ export function computeSummary(reviews: ReviewRecord[]): AdherenceSummary[] {
 }
 
 // プランを取得（未設定の場合はデフォルト: free / 3件）
-export function getPlan(userId: string): UserPlan {
+export function getPlan(): UserPlan {
   try {
     const raw = localStorage.getItem(KEYS.PLAN);
-    const map = raw ? (JSON.parse(raw) as PlanStorage) : {};
-    const entry = map[userId];
-    if (entry) {
-      return { userId: userId as UserId, plan: entry.plan, maxItems: entry.maxItems };
-    }
+    if (!raw) return DEFAULT_PLAN;
+    return normalizePlan(JSON.parse(raw));
   } catch {
-    // パース失敗時はデフォルトを返す
+    return DEFAULT_PLAN;
   }
-  return { userId: userId as UserId, plan: "free", maxItems: 3 };
 }
 
 // プランを設定
-export function setPlan(userId: string, plan: "free" | "pro", maxItems: number): void {
+export function setPlan(plan: "free" | "pro", maxItems: number): void {
   try {
-    const raw = localStorage.getItem(KEYS.PLAN);
-    const map = raw ? (JSON.parse(raw) as PlanStorage) : {};
-    map[userId] = { plan, maxItems };
-    localStorage.setItem(KEYS.PLAN, JSON.stringify(map));
+    localStorage.setItem(KEYS.PLAN, JSON.stringify({ plan, maxItems }));
   } catch {
     // 書き込みエラーは無視
   }

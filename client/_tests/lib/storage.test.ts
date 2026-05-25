@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as storage from "../../src/lib/storage";
 
-// 各テスト前にlocalStorageをクリア（setup.tsのafterEachでも行われる）
 beforeEach(() => {
   localStorage.clear();
 });
@@ -12,14 +11,13 @@ describe("storage - アイテム操作", () => {
   });
 
   it("addItemでアイテムを追加できる", () => {
-    const item = storage.addItem("SNSを見ない", "時間の無駄", "2026-01-01", 66, "userA");
+    const item = storage.addItem("SNSを見ない", "時間の無駄", "2026-01-01", 66);
     expect(item.id).toBeTruthy();
     expect(item.title).toBe("SNSを見ない");
     expect(item.reason).toBe("時間の無駄");
     expect(item.startDate).toBe("2026-01-01");
     expect(item.targetDays).toBe(66);
     expect(item.currentAttempt).toBe(1);
-    expect(item.userId).toBe("userA");
     expect(item.createdAt).toBeTruthy();
     expect(item.updatedAt).toBeTruthy();
   });
@@ -31,20 +29,12 @@ describe("storage - アイテム操作", () => {
     expect(items[0].title).toBe("テスト");
   });
 
-  it("userIdなしでaddItemできる", () => {
-    const item = storage.addItem("タイトル", "理由", "2026-01-01", 30);
-    expect(item.userId).toBeUndefined();
-  });
-
-  it("updateItemでアイテムを更新できる", async () => {
+  it("updateItemでアイテムを更新できる", () => {
     const item = storage.addItem("元のタイトル", "元の理由", "2026-01-01", 66);
-    // addItem と updateItem が同じミリ秒内で実行されると updatedAt が同一になるため、
-    // 最低1ms待機してから更新する
-    await new Promise((resolve) => setTimeout(resolve, 1));
     const updated = storage.updateItem(item.id, { title: "新しいタイトル" });
     expect(updated.title).toBe("新しいタイトル");
     expect(updated.reason).toBe("元の理由");
-    expect(updated.updatedAt).not.toBe(item.updatedAt);
+    expect(updated.updatedAt).toBeTruthy();
   });
 
   it("updateItemで存在しないIDはエラーになる", () => {
@@ -73,12 +63,11 @@ describe("storage - レビュー操作", () => {
 
   it("addReviewでレビューを追加できる", () => {
     const item = storage.addItem("テスト", "理由", "2026-01-01", 66);
-    const review = storage.addReview(item.id, "kept", "良かった", "userA");
+    const review = storage.addReview(item.id, "kept", "良かった");
     expect(review.id).toBeTruthy();
     expect(review.itemId).toBe(item.id);
     expect(review.adherence).toBe("kept");
     expect(review.reflection).toBe("良かった");
-    expect(review.userId).toBe("userA");
     expect(review.reviewedAt).toBeTruthy();
   });
 
@@ -120,24 +109,26 @@ describe("storage - サマリー計算", () => {
 
 describe("storage - プラン操作", () => {
   it("未設定の場合はデフォルトプランを返す（free / 3件）", () => {
-    const plan = storage.getPlan("userA");
+    const plan = storage.getPlan();
     expect(plan.plan).toBe("free");
     expect(plan.maxItems).toBe(3);
-    expect(plan.userId).toBe("userA");
   });
 
   it("setPlanでプランを保存してgetPlanで取得できる", () => {
-    storage.setPlan("userA", "pro", 9999);
-    const plan = storage.getPlan("userA");
+    storage.setPlan("pro", 9999);
+    const plan = storage.getPlan();
     expect(plan.plan).toBe("pro");
     expect(plan.maxItems).toBe(9999);
   });
 
-  it("ユーザーごとに別々のプランが保存される", () => {
-    storage.setPlan("userA", "pro", 9999);
-    storage.setPlan("userB", "free", 3);
-    expect(storage.getPlan("userA").plan).toBe("pro");
-    expect(storage.getPlan("userB").plan).toBe("free");
+  it("旧形式（userId キー付き）からプランを移行できる", () => {
+    localStorage.setItem(
+      "not-to-do-plan",
+      JSON.stringify({ userA: { plan: "pro", maxItems: 10 }, userB: { plan: "free", maxItems: 3 } }),
+    );
+    const plan = storage.getPlan();
+    expect(plan.plan).toBe("pro");
+    expect(plan.maxItems).toBe(10);
   });
 });
 

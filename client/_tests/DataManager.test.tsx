@@ -14,7 +14,6 @@ const mockItems: NotToDoItem[] = [
     startDate: "2026-01-01",
     targetDays: 66,
     currentAttempt: 1,
-    userId: "userA",
   },
 ];
 
@@ -26,7 +25,6 @@ const mockReviews: ReviewRecord[] = [
     reflection: "テスト振り返り",
     reviewedAt: "2026-01-02T00:00:00.000Z",
     attemptNumber: 1,
-    userId: "userA",
   },
 ];
 
@@ -53,7 +51,6 @@ describe("DataManager - JSONエクスポート", () => {
       <DataManager
         items={mockItems}
         reviews={mockReviews}
-        currentUser="userA"
         onImportComplete={async () => {}}
       />,
     );
@@ -68,7 +65,6 @@ describe("DataManager - JSONエクスポート", () => {
       <DataManager
         items={mockItems}
         reviews={mockReviews}
-        currentUser="userA"
         onImportComplete={async () => {}}
       />,
     );
@@ -92,7 +88,6 @@ describe("DataManager - JSONエクスポート", () => {
       <DataManager
         items={mockItems}
         reviews={mockReviews}
-        currentUser="userA"
         onImportComplete={async () => {}}
       />,
     );
@@ -118,7 +113,6 @@ describe("DataManager - JSONインポート", () => {
       <DataManager
         items={[]}
         reviews={[]}
-        currentUser="userA"
         onImportComplete={async () => {}}
       />,
     );
@@ -138,7 +132,6 @@ describe("DataManager - JSONインポート", () => {
       <DataManager
         items={[]}
         reviews={[]}
-        currentUser="userA"
         onImportComplete={async () => {}}
       />,
     );
@@ -158,7 +151,6 @@ describe("DataManager - JSONインポート", () => {
       <DataManager
         items={[]}
         reviews={[]}
-        currentUser="userA"
         onImportComplete={onImportComplete}
       />,
     );
@@ -180,7 +172,6 @@ describe("DataManager - JSONインポート", () => {
       <DataManager
         items={[]}
         reviews={[]}
-        currentUser="userA"
         onImportComplete={onImportComplete}
       />,
     );
@@ -204,7 +195,6 @@ describe("DataManager - JSONインポート", () => {
       <DataManager
         items={[]}
         reviews={[]}
-        currentUser="userA"
         onImportComplete={async () => {}}
       />,
     );
@@ -218,28 +208,22 @@ describe("DataManager - JSONインポート", () => {
     });
   });
 
-  it("インポート時にuserIdがcurrentUserに設定される", async () => {
+  it("インポートしたデータがそのまま保存される", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     render(
-      <DataManager
-        items={[]}
-        reviews={[]}
-        currentUser="userB"
-        onImportComplete={async () => {}}
-      />,
+      <DataManager items={[]} reviews={[]} onImportComplete={async () => {}} />,
     );
 
     const input = screen.getByTestId("json-import-input");
     await user.upload(input, new File([backupJson], "backup.json", { type: "application/json" }));
     await user.click(screen.getByRole("button", { name: "インポート実行" }));
 
-    // localStorageのuserIdがcurrentUser(userB)になっていることを確認
     await waitFor(() => {
       const items = JSON.parse(localStorage.getItem("not-to-do-items") ?? "[]") as NotToDoItem[];
-      expect(items[0]?.userId).toBe("userB");
+      expect(items[0]?.title).toBe("テストアイテム");
     });
     const reviews = JSON.parse(localStorage.getItem("not-to-do-reviews") ?? "[]") as ReviewRecord[];
-    expect(reviews[0]?.userId).toBe("userB");
+    expect(reviews[0]?.reflection).toBe("テスト振り返り");
   });
 });

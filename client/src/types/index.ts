@@ -1,5 +1,3 @@
-export type UserId = "userA" | "userB";
-
 /** やらないことアイテム */
 export interface NotToDoItem {
   id: string;
@@ -15,7 +13,6 @@ export interface NotToDoItem {
   currentAttempt: number;
   /** 完了日時。未完了なら undefined */
   completedAt?: string;
-  userId?: string;
 }
 
 /** 振り返り記録 */
@@ -27,7 +24,6 @@ export interface ReviewRecord {
   reviewedAt: string;
   /** 何回目の試みのレビューか */
   attemptNumber: number;
-  userId?: string;
 }
 
 /** アイテムごとの遵守率サマリー */
@@ -40,7 +36,6 @@ export interface AdherenceSummary {
 
 /** ユーザープラン */
 export interface UserPlan {
-  userId: UserId;
   plan: "free" | "pro";
   maxItems: number;
 }

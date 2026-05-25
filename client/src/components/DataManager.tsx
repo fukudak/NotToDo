@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { todayISO } from "../lib/dates";
+import { downloadBlob } from "../lib/downloadBlob";
 import { downloadMarkdown, generateMarkdown } from "../lib/exportMarkdown";
 import { parseBackupFile } from "../lib/importMarkdown";
 import * as storage from "../lib/storage";
@@ -7,11 +9,10 @@ import type { NotToDoItem, ReviewRecord } from "../types";
 interface DataManagerProps {
   items: NotToDoItem[];
   reviews: ReviewRecord[];
-  currentUser: string;
   onImportComplete: () => Promise<void>;
 }
 
-export function DataManager({ items, reviews, currentUser, onImportComplete }: DataManagerProps) {
+export function DataManager({ items, reviews, onImportComplete }: DataManagerProps) {
   const [importing, setImporting] = useState(false);
   const [jsonImporting, setJsonImporting] = useState(false);
   const [jsonPreview, setJsonPreview] = useState<{
@@ -22,30 +23,21 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
   const fileInputRef = useRef<HTMLInputElement>(null);
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Markdownとしてバックアップをダウンロード
   const handleExport = () => {
     const content = generateMarkdown(items, reviews);
-    const date = new Date().toISOString().slice(0, 10);
-    downloadMarkdown(content, `not-to-do-${date}.md`);
+    downloadMarkdown(content, `not-to-do-${todayISO()}.md`);
     setMessage({ type: "success", text: "バックアップを保存しました" });
     setTimeout(() => setMessage(null), 3000);
   };
 
-  // JSONとしてエクスポート（storage.exportAll を使用）
   const handleJsonExport = () => {
-    const json = storage.exportAll();
-    const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `not-to-do-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(
+      storage.exportAll(),
+      `not-to-do-backup-${todayISO()}.json`,
+      "application/json;charset=utf-8",
+    );
   };
 
-  // JSONファイルを選択してプレビューを表示
   const handleJsonFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -69,7 +61,6 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     }
   };
 
-  // プレビュー確認後にJSONインポートを実行
   const handleJsonImport = async () => {
     if (!jsonPreview) return;
     const confirmed = window.confirm("既存のデータに追加します。続けますか？");
@@ -77,13 +68,7 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
 
     setJsonImporting(true);
     try {
-      // currentUserのuserIdを付与してインポート
-      const importItems = jsonPreview.items.map((item) => ({ ...item, userId: currentUser }));
-      const importReviews = jsonPreview.reviews.map((review) => ({
-        ...review,
-        userId: currentUser,
-      }));
-      const result = storage.importAll(JSON.stringify({ items: importItems, reviews: importReviews }));
+      const result = storage.importAll(JSON.stringify(jsonPreview));
       await onImportComplete();
       setJsonPreview(null);
       if (jsonFileInputRef.current) {
@@ -103,7 +88,6 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
     }
   };
 
-  // MarkdownまたはJSONファイルからインポート
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -175,18 +159,12 @@ export function DataManager({ items, reviews, currentUser, onImportComplete }: D
         <div className="json-import-preview">
           <p>アイテム数: {jsonPreview.items.length}件</p>
           <p>レビュー数: {jsonPreview.reviews.length}件</p>
-          <button
-            className="btn-data"
-            onClick={handleJsonImport}
-            disabled={jsonImporting}
-          >
+          <button className="btn-data" onClick={handleJsonImport} disabled={jsonImporting}>
             {jsonImporting ? "インポート中..." : "インポート実行"}
           </button>
         </div>
       )}
-      {message && (
-        <p className={`data-manager-message ${message.type}`}>{message.text}</p>
-      )}
+      {message && <p className={`data-manager-message ${message.type}`}>{message.text}</p>}
     </div>
   );
 }
