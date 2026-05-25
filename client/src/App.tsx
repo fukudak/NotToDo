@@ -9,6 +9,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { useItems } from "./hooks/useItems";
 import { usePlan } from "./hooks/usePlan";
 import { useReviews } from "./hooks/useReviews";
+import { isLocalStorageAvailable } from "./lib/localStorageAvailability";
+import { APP_VERSION } from "./version";
 
 type Tab = "list" | "review" | "edit" | "settings";
 
@@ -19,6 +21,7 @@ function getOwnerId(userId: string | undefined): string {
 function AppContent() {
   const { auth, switchUser, login, logout } = useAuth();
   const currentUser = auth.userId;
+  const storageAvailable = isLocalStorageAvailable();
 
   const [activeTab, setActiveTab] = useState<Tab>("list");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -90,11 +93,12 @@ function AppContent() {
       <div className="app-bg" aria-hidden="true">
         <div className="app-bg-glow app-bg-glow--1" />
         <div className="app-bg-glow app-bg-glow--2" />
+        <div className="app-bg-glow app-bg-glow--3" />
       </div>
 
       <header className="app-header">
         <div className="app-logo" aria-hidden="true">
-          <span className="logo-icon">否</span>
+          <span className="logo-icon">×</span>
         </div>
         <div className="app-title-area">
           <p className="app-eyebrow">Not To Do</p>
@@ -170,6 +174,11 @@ function AppContent() {
       </nav>
 
       {error && <div className="error-banner">{error}</div>}
+      {!storageAvailable && (
+        <div className="storage-warning-banner" role="alert">
+          このブラウザではデータを保存できません。プライベートブラウジングを解除するか、通常モードで開いてください。閉じると入力内容は失われます。
+        </div>
+      )}
       {loading && <div className="loading-bar" />}
 
       <main className="app-main">
@@ -247,6 +256,10 @@ function AppContent() {
           </section>
         )}
       </main>
+
+      <footer className="app-version" aria-label="アプリバージョン">
+        v{APP_VERSION}
+      </footer>
     </div>
   );
 }

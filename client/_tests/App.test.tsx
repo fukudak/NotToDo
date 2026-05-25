@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
 
 // localStorageに書き込むデータ
@@ -102,5 +102,17 @@ describe("App shell", () => {
       expect(screen.getByText("userBのアイテム")).toBeInTheDocument();
     });
     expect(screen.queryByText("userAのアイテム")).not.toBeInTheDocument();
+  });
+
+  it("localStorage が使えないとき警告を表示する", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("The operation is insecure.");
+    });
+
+    render(<App />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("このブラウザではデータを保存できません");
+
+    setItem.mockRestore();
   });
 });
