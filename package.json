@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "cd client && bunx --bun vite",
     "build": "vite build --config client/vite.config.ts",
+    "deploy": "wrangler deploy",
     "test": "vitest run"
   },
   "dependencies": {
