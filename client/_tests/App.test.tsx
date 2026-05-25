@@ -43,6 +43,7 @@ describe("App shell", () => {
     expect(screen.getByRole("button", { name: "+ やらないことを追加" })).toBeInTheDocument();
 
     expect(screen.getByText("「やらないこと」はまだありません")).toBeInTheDocument();
+    expect(screen.getByLabelText("バージョン 0.9.0")).toHaveTextContent("v0.9.0");
 
     await user.click(screen.getByRole("tab", { name: "振り返り" }));
     expect(screen.getByRole("tab", { name: "振り返り" })).toHaveAttribute("aria-selected", "true");

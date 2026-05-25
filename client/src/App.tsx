@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { AddItemForm } from "./components/AddItemForm";
-import { DataManager } from "./components/DataManager";
 import { ItemEditList } from "./components/ItemEditList";
 import { ItemList } from "./components/ItemList";
 import { ReviewPanel } from "./components/ReviewPanel";
@@ -54,21 +53,20 @@ export function App() {
 
   return (
     <div className="app">
-      <div className="app-bg" aria-hidden="true">
-        <div className="app-bg-glow app-bg-glow--1" />
-        <div className="app-bg-glow app-bg-glow--2" />
-        <div className="app-bg-glow app-bg-glow--3" />
-      </div>
-
       <header className="app-header">
-        <div className="app-logo" aria-hidden="true">
-          <span className="logo-icon">×</span>
+        <div className="app-header-main">
+          <div className="app-logo" aria-hidden="true">
+            <span className="logo-icon">×</span>
+          </div>
+          <div className="app-title-area">
+            <p className="app-eyebrow">Not To Do</p>
+            <h1 className="app-title">やらないことリスト</h1>
+            <p className="app-subtitle">やらないと決めたことを、習慣化するまで記録する</p>
+          </div>
         </div>
-        <div className="app-title-area">
-          <p className="app-eyebrow">Not To Do</p>
-          <h1 className="app-title">やらないことリスト</h1>
-          <p className="app-subtitle">やらないと決めたことを、習慣化するまで記録する</p>
-        </div>
+        <p className="app-version-badge" aria-label={`バージョン ${APP_VERSION}`}>
+          v{APP_VERSION}
+        </p>
       </header>
 
       <nav className="tab-nav" role="tablist" aria-label="画面切り替え">
@@ -142,7 +140,6 @@ export function App() {
               onDelete={handleDeleteItem}
               onRetry={handleRetryItem}
             />
-            <DataManager items={items} reviews={reviews} onImportComplete={handleImportComplete} />
           </section>
         )}
 
@@ -164,14 +161,16 @@ export function App() {
 
         {activeTab === "settings" && (
           <section id="panel-settings" aria-labelledby="tab-settings">
-            <SettingsPanel plan={plan} itemCount={items.length} />
+            <SettingsPanel
+              plan={plan}
+              itemCount={items.length}
+              items={items}
+              reviews={reviews}
+              onImportComplete={handleImportComplete}
+            />
           </section>
         )}
       </main>
-
-      <footer className="app-version" aria-label="アプリバージョン">
-        v{APP_VERSION}
-      </footer>
     </div>
   );
 }
