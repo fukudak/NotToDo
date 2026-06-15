@@ -7,6 +7,7 @@ import {
   getTargetDays,
   progressStageClass,
 } from "../lib/itemProgress";
+import { useState } from "react";
 import { formatDisplayDate } from "../lib/dates";
 import type { AdherenceSummary, NotToDoItem, ReviewRecord } from "../types";
 
@@ -36,6 +37,8 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
         ? "今回の試みは失敗"
         : `あと${remainingDays}日`;
 
+  const [isReasonOpen, setIsReasonOpen] = useState(false);
+
   return (
     <div className={`item-card status-${progress.status} ${stageClass}`.trim()}>
       <div className="item-header">
@@ -58,7 +61,16 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
         </button>
       </div>
 
-      <p className="item-reason">{item.reason}</p>
+      <div className="reason-section">
+        <button
+          className="reason-toggle"
+          onClick={() => setIsReasonOpen(!isReasonOpen)}
+          aria-expanded={isReasonOpen}
+        >
+          理由 {isReasonOpen ? "−" : "+"}
+        </button>
+        {isReasonOpen && <p className="item-reason">{item.reason}</p>}
+      </div>
 
       {progress.status === "achieved" && (
         <div className="achievement-badge">
@@ -107,7 +119,10 @@ export function ItemCard({ item, summary, reviews, onDelete, onRetry }: ItemCard
               : "まだ振り返りなし"}
           </span>
         </div>
-        <span className="item-date">開始: {formatDisplayDate(getItemStartDate(item))}</span>
+        <div className="meta-info">
+          <span className="item-date">作成: {formatDisplayDate(item.createdAt)}</span>
+          <span className="item-date">開始: {formatDisplayDate(getItemStartDate(item))}</span>
+        </div>
       </div>
     </div>
   );

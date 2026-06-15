@@ -9,69 +9,75 @@
 }
 
 :root {
-  /* 背景・面 */
-  --bg-deep: #ffffff;
+  /* Fluent 2 inspired - Calm Neutral Palette (no green) */
+  /* 背景・面 (8pxベースのニュートラル階層) */
+  --bg-deep: #f8fafc;
   --bg-base: #ffffff;
   --bg-elevated: #ffffff;
-  --bg-overlay: #f5f5f5;
+  --bg-overlay: #f1f5f9;
   --surface: #ffffff;
-  --surface-hover: #fafafa;
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
+  --surface-hover: #f8fafc;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
 
-  /* テキスト */
-  --text-primary: #1a1a1a;
-  --text-secondary: #555555;
-  --text-muted: #888888;
-  --text-disabled: #bbbbbb;
+  /* テキスト (落ち着いた階層) */
+  --text-primary: #1e2937;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-disabled: #94a3b8;
 
-  /* アクセント */
-  --accent: #e0456a;
-  --accent-hover: #c93a5c;
-  --accent-soft: rgba(224, 69, 106, 0.08);
+  /* アクセント (ニュートラル中心・ローズアクセント) */
+  --accent: #e11d48;
+  --accent-hover: #be123c;
+  --accent-soft: rgba(225, 29, 72, 0.08);
   --accent-glow: transparent;
 
-  --gold: #d4a017;
-  --gold-soft: rgba(212, 160, 23, 0.1);
+  --gold: #ca8a04;
+  --gold-soft: rgba(202, 138, 4, 0.08);
   --gold-glow: transparent;
 
-  --sage: #2ea86a;
-  --sage-soft: rgba(46, 168, 106, 0.1);
+  --amber: #b45309;
+  --amber-soft: rgba(180, 83, 9, 0.08);
 
-  --amber: #d97706;
-  --amber-soft: rgba(217, 119, 6, 0.1);
+  --sky: #0369a1;
+  --sky-soft: rgba(3, 105, 161, 0.08);
 
-  --sky: #3b82c4;
-  --sky-soft: rgba(59, 130, 196, 0.1);
+  --danger: #b91c1c;
+  --danger-soft: rgba(185, 28, 28, 0.08);
 
-  --danger: #dc2626;
-  --danger-soft: rgba(220, 38, 38, 0.08);
+  /* タイポグラフィ (Fluent風クリーン) */
+  --font-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --font-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
 
-  /* タイポグラフィ */
-  --font-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
-  --font-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif;
-
-  --text-xs: 0.6875rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.9375rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
   --text-lg: 1.125rem;
-  --text-xl: 1.375rem;
-  --text-2xl: 1.875rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
 
-  /* 形状 */
-  --radius-sm: 8px;
-  --radius-md: 10px;
+  /* 形状・スペーシング (Fluent 2 8px grid) */
+  --radius-sm: 6px;
+  --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
   --shadow-glow: none;
 
-  --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --duration: 0.15s;
+  --ease-out: cubic-bezier(0.33, 0, 0.2, 1);
+  --duration: 0.2s;
+
+  /* 統一余白トークン */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
 }
 
 html {
@@ -676,7 +682,7 @@ button[type="submit"]:disabled {
 .item-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .app-main > section {
@@ -944,17 +950,17 @@ button[type="submit"]:disabled {
 
 .empty-state {
   text-align: center;
-  padding: 56px 24px;
+  padding: 64px 24px;
   color: var(--text-muted);
 }
 
 .empty-icon {
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: 3.5rem;
   color: var(--accent);
   margin-bottom: 16px;
   line-height: 1;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .empty-title {

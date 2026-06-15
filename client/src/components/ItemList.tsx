@@ -13,9 +13,9 @@ export function ItemList({ items, summaries, reviews, onDelete, onRetry }: ItemL
   if (items.length === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-icon">✓</div>
-        <p className="empty-title">「やらないこと」はまだありません</p>
-        <p className="empty-desc">上のフォームから追加しましょう。</p>
+        <div className="empty-icon">📭</div>
+        <p className="empty-title">まだ「やらないこと」がありません</p>
+        <p className="empty-desc">上のフォームから、避けたいことを追加してみましょう。</p>
       </div>
     );
   }

@@ -109,20 +109,25 @@ export function ReviewPanel({ items, reviews, onAddReview }: ReviewPanelProps) {
       {recentReviews.length > 0 && (
         <div className="review-history">
           <h3>最近の振り返り</h3>
-          {recentReviews.map((review) => (
-            <div key={review.id} className={`review-record ${review.adherence}`}>
-              <div className="review-header">
-                <span className="review-item-name">{getItemTitle(review.itemId)}</span>
-                <span className={`review-badge ${review.adherence}`}>
-                  {review.adherence === "kept" ? "守れた" : "破った"}
-                </span>
+          <div className="timeline">
+            {recentReviews.map((review, index) => (
+              <div key={review.id} className={`timeline-item ${review.adherence}`}>
+                <div className="timeline-dot" />
+                <div className="timeline-content">
+                  <div className="timeline-header">
+                    <span className="review-item-name">{getItemTitle(review.itemId)}</span>
+                    <span className={`review-badge ${review.adherence}`}>
+                      {review.adherence === "kept" ? "守れた" : "破った"}
+                    </span>
+                  </div>
+                  <p className="review-reflection">{review.reflection}</p>
+                  <span className="review-date">
+                    {new Date(review.reviewedAt).toLocaleDateString("ja-JP")}
+                  </span>
+                </div>
               </div>
-              <p className="review-reflection">{review.reflection}</p>
-              <span className="review-date">
-                {new Date(review.reviewedAt).toLocaleDateString("ja-JP")}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
