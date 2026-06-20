@@ -52,16 +52,15 @@ export function App() {
   const error = itemsError ?? reviewsError;
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="app-header-main">
+    <div className="app-shell">
+      <header className="app-bar">
+        <div className="app-bar-brand">
           <div className="app-logo" aria-hidden="true">
             <span className="logo-icon">×</span>
           </div>
           <div className="app-title-area">
             <p className="app-eyebrow">Not To Do</p>
             <h1 className="app-title">やらないことリスト</h1>
-            <p className="app-subtitle">やらないと決めたことを、習慣化するまで記録する</p>
           </div>
         </div>
         <p className="app-version-badge" aria-label={`バージョン ${APP_VERSION}`}>
@@ -69,57 +68,74 @@ export function App() {
         </p>
       </header>
 
-      <nav className="tab-nav" role="tablist" aria-label="画面切り替え">
-        <button
-          role="tab"
-          aria-selected={activeTab === "list"}
-          aria-controls="panel-list"
-          id="tab-list"
-          className={`tab-button ${activeTab === "list" ? "active" : ""}`}
-          onClick={() => setActiveTab("list")}
-        >
-          リスト
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === "review"}
-          aria-controls="panel-review"
-          id="tab-review"
-          className={`tab-button ${activeTab === "review" ? "active" : ""}`}
-          onClick={() => setActiveTab("review")}
-        >
-          振り返り
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === "edit"}
-          aria-controls="panel-edit"
-          id="tab-edit"
-          className={`tab-button ${activeTab === "edit" ? "active" : ""}`}
-          onClick={() => setActiveTab("edit")}
-        >
-          編集
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === "settings"}
-          aria-controls="panel-settings"
-          id="tab-settings"
-          className={`tab-button ${activeTab === "settings" ? "active" : ""}`}
-          onClick={() => setActiveTab("settings")}
-        >
-          設定
-        </button>
-      </nav>
+      <div className="app-container">
+        <p className="app-subtitle">
+          やらないと決めたことを、習慣化するまで記録する
+        </p>
 
-      {error && <div className="error-banner">{error}</div>}
-      {!storageAvailable && (
-        <div className="storage-warning-banner" role="alert">
-          このブラウザではデータを保存できません。プライベートブラウジングを解除するか、通常モードで開いてください。閉じると入力内容は失われます。
-        </div>
-      )}
+        <nav className="tab-nav" role="tablist" aria-label="画面切り替え">
+          <button
+            role="tab"
+            aria-selected={activeTab === "list"}
+            aria-controls="panel-list"
+            id="tab-list"
+            className={`tab-button ${activeTab === "list" ? "active" : ""}`}
+            onClick={() => setActiveTab("list")}
+          >
+            リスト
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === "review"}
+            aria-controls="panel-review"
+            id="tab-review"
+            className={`tab-button ${activeTab === "review" ? "active" : ""}`}
+            onClick={() => setActiveTab("review")}
+          >
+            振り返り
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === "edit"}
+            aria-controls="panel-edit"
+            id="tab-edit"
+            className={`tab-button ${activeTab === "edit" ? "active" : ""}`}
+            onClick={() => setActiveTab("edit")}
+          >
+            編集
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === "settings"}
+            aria-controls="panel-settings"
+            id="tab-settings"
+            className={`tab-button ${activeTab === "settings" ? "active" : ""}`}
+            onClick={() => setActiveTab("settings")}
+          >
+            設定
+          </button>
+        </nav>
 
-      <main className="app-main">
+        {(error || !storageAvailable) && (
+          <div className="message-stack" role="status">
+            {error && (
+              <div className="message-bar message-bar-error" role="alert">
+                <span className="message-bar-icon" aria-hidden="true">!</span>
+                <span className="message-bar-text">{error}</span>
+              </div>
+            )}
+            {!storageAvailable && (
+              <div className="message-bar message-bar-warning" role="alert">
+                <span className="message-bar-icon" aria-hidden="true">!</span>
+                <span className="message-bar-text">
+                  このブラウザではデータを保存できません。プライベートブラウジングを解除するか、通常モードで開いてください。閉じると入力内容は失われます。
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <main className="app-main">
         {activeTab === "list" && (
           <section id="panel-list" aria-labelledby="tab-list">
             <button className="btn-add-toggle" onClick={() => setShowAddForm((v) => !v)}>
@@ -170,7 +186,8 @@ export function App() {
             />
           </section>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
