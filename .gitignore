@@ -12,6 +12,9 @@ server/data/
 .mise.toml.local
 mise.local.toml
 
+# Cloudflare Pages must use the root package-lock.json / npm ci path.
+/bun.lock
+
 # local environment overrides
 .env.local
 .env.*.local
