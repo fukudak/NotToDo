@@ -1,5 +1,8 @@
 # NotToDo Firebase Hosting デプロイ手順
 
+> **Status: 未実施の旧案。** 現在のホスティング正典はCloudflare Pages。
+> 現行手順は [cloudflare-pages-deploy.md](cloudflare-pages-deploy.md) を参照すること。
+
 > VPS（`ssh hermes`）上で実行する想定
 > 現在の状態: `vite build` 成功済み、`firebase.json` / `.firebaserc` 未整備、認証未済
 

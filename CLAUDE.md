@@ -5,7 +5,7 @@
 
 ## Invariants
 - データは `localStorage` に永続化する。外部DBもサーバーも使わない
-- クライアント: React SPA (Vite)。Firebase Hosting へデプロイ
+- クライアント: React SPA (Vite)。Cloudflare Pages へデプロイ
 - サーバーレス構成。すべてのロジックはクライアントサイドで動作する
 
 ## Known Debt
@@ -16,9 +16,8 @@
 
 ## 開発コマンド
 ```bash
-bun install                  # ルートの依存
-cd client && bun install     # クライアントの依存
-bun run dev                  # 開発サーバー起動（client:5173）
-bun run build                # クライアントビルド
-bun run test                 # テスト実行
+npm ci                       # 依存を固定lockから導入
+npm run dev                  # 開発サーバー起動（client:5173）
+npm run build                # クライアントビルド
+npm test                     # テスト実行
 ```

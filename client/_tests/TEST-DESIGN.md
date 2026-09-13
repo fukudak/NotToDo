@@ -8,7 +8,7 @@
 ## 1. テストツール選定
 
 ### 結論
-以下を `devDependencies` に追加する（ルート `package.json` に統一する。`vitest` 本体はすでにルートに入っているため、クライアントは `client/package.json` でなくルートに足す方が `bun run test` 一本でサーバー/クライアント両方を回せて運用が楽）。
+以下を `devDependencies` に追加する（ルート `package.json` に統一する。`vitest` 本体はすでにルートに入っているため、クライアント個別のpackageを作らずルートから `npm test` を実行する）。
 
 | パッケージ | 役割 | 必須か |
 |---|---|---|
@@ -352,7 +352,7 @@ client/_tests/
     App.test.tsx                 # P3（結合 1〜2 ケース）
 ```
 
-サーバー側 (`server/_tests/`) と階層を揃えてあるので、`bun run test` 実行時に両 project の出力を見比べやすい。
+サーバー側 (`server/_tests/`) と階層を揃えてあるので、`npm test` 実行時に両 project の出力を見比べやすい。
 
 ---
 
@@ -362,4 +362,4 @@ client/_tests/
 2. `vitest.config.ts` を projects 構成に書き換え（§2）
 3. `client/_tests/setup.ts` を作成（§2）
 4. P1 から順に `.test.ts` / `.test.tsx` を追加
-5. `bun run test` で server + client 両方が緑になることを確認
+5. `npm test` で server + client 両方が緑になることを確認

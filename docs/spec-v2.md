@@ -14,11 +14,11 @@
 | レイヤー | 技術 | 役割 |
 |----------|------|------|
 | クライアント | React 19 SPA (Vite + TypeScript) | UI・状態管理・localStorage永続化 |
-| ホスティング | Firebase Hosting | 静的ファイル配信（完全クライアントサイド） |
+| ホスティング | Cloudflare Pages | 静的ファイル配信（完全クライアントサイド） |
 
 - **サーバーなし**: データはブラウザの `localStorage` にのみ保存
 - **端末内完結**: 複数端末間の同期はない
-- **デプロイ**: `client/dist/` を Firebase Hosting に公開
+- **デプロイ**: `client/dist/` を Cloudflare Pages に公開
 
 ### 設計上の想定
 
@@ -345,16 +345,15 @@ else                                → "ongoing"
 ## 9. 開発コマンド
 
 ```bash
-bun install                  # ルートの依存
-cd client && bun install     # クライアントの依存
-bun run dev                  # 開発サーバー起動（client:5173）
-bun run build                # クライアントビルド
-bun run test                 # テスト実行
+npm ci                       # ルートの固定lockから依存を導入
+npm run dev                  # 開発サーバー起動（client:5173）
+npm run build                # クライアントビルド
+npm test                     # テスト実行
 ```
 
 ### ビルド成果物
 
-- `client/dist/` — Firebase Hosting にデプロイする静的ファイル群
+- `client/dist/` — Cloudflare Pages にデプロイする静的ファイル群
 
 ---
 

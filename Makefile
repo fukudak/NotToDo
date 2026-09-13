@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: env dev test build start
+.PHONY: env dev test build
 
 env:
 	@echo "Flutter: use fvm"
@@ -8,13 +8,10 @@ env:
 	@echo "Docker: available via docker compose"
 
 dev:
-	bun run dev
+	npm run dev
 
 test:
-	bun run test
+	npm test
 
 build:
-	bun run build
-
-start:
-	bun run start
+	npm run build
